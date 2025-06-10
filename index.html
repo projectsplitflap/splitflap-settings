@@ -12,6 +12,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 <script src="airport-cycling.js"></script>
+<script src="airline-shortener.js"></script>
     <style>
         * {
             margin: 0;
@@ -680,20 +681,61 @@
 
         // NEW: Text formatting function to ensure exactly 6 characters
         function formatFor6CharDisplay(text) {
-            // Convert to uppercase and remove invalid characters
-            let formatted = text.toUpperCase().replace(/[^A-Z0-9 ]/g, '');
-            
-            // Ensure exactly 6 characters
-            if (formatted.length > 6) {
-                // If too long, take the first 6 characters
-                formatted = formatted.substring(0, 6);
-            } else if (formatted.length < 6) {
-                // If too short, pad with spaces at the end
-                formatted = formatted.padEnd(6, ' ');
-            }
-            
-            return formatted;
+    // Convert to uppercase and remove invalid characters
+    let formatted = text.toUpperCase().replace(/[^A-Z0-9 ]/g, '');
+    
+    // Check if this looks like an airline callsign (all letters, 3-4 characters typically)
+    // and try to shorten it using our airline mapping
+    if (/^[A-Z]{3,4}$/.test(formatted.trim())) {
+        const shortened = window.AirlineShortener.getShortAirlineCode(formatted.trim());
+        if (shortened && shortened !== formatted.trim()) {
+            formatted = shortened;
+            console.log(`Airline code shortened: ${text.trim()} -> ${shortened}`);
         }
+    }
+    
+    // Ensure exactly 6 characters
+    if (formatted.length > 6) {
+        // If too long, take the first 6 characters
+        formatted = formatted.substring(0, 6);
+    } else if (formatted.length < 6) {
+        // If too short, pad with spaces at the end
+        formatted = formatted.padEnd(6, ' ');
+    }
+    
+    return formatted;
+}
+
+// Enhanced flight display function that prioritizes airline codes
+function updateFlightDisplayWithAirlineShortening(flight) {
+    if (!flight || !flight.callsign) return;
+    
+    // Extract potential airline code from callsign (first 3-4 letters typically)
+    const callsignMatch = flight.callsign.match(/^([A-Z]{2,4})/);
+    
+    if (callsignMatch) {
+        const airlineCode = callsignMatch[1];
+        const shortCode = window.AirlineShortener.getShortAirlineCode(airlineCode);
+        
+        if (shortCode && shortCode !== airlineCode) {
+            // Create a shortened callsign
+            const remainingPart = flight.callsign.substring(airlineCode.length);
+            const shortenedCallsign = shortCode + remainingPart;
+            
+            console.log(`Flight callsign shortened: ${flight.callsign} -> ${shortenedCallsign}`);
+            
+            // Update the flight object with shortened callsign for display
+            flight.displayCallsign = shortenedCallsign;
+        } else {
+            flight.displayCallsign = flight.callsign;
+        }
+    } else {
+        flight.displayCallsign = flight.callsign;
+    }
+    
+    // Use the regular display update function
+    updateFlightDisplay(flight);
+}
 
         // Firebase Credential Management
         async function loadCredentialsFromFirebase() {
@@ -1062,12 +1104,14 @@
                         addMessage('🔥 Flight data saved to Firebase');
                     }
                     
-                    // Format callsign for display using exact 6-character formatting
-                    let displayCallsign = closestFlight.callsign;
-                    const formattedCallsign = formatFor6CharDisplay(displayCallsign);
-                    
-                    mqttClient.publish(MQTT_TOPIC, formattedCallsign, { qos: 0 });
-                    addMessage(`📤 Sent to display: "${formattedCallsign}"`);
+                    // Use enhanced airline shortening for flight display
+                updateFlightDisplayWithAirlineShortening(closestFlight);
+                
+                // Format the display callsign for the splitflap
+                const formattedCallsign = formatFor6CharDisplay(closestFlight.displayCallsign || closestFlight.callsign);
+                
+                mqttClient.publish(MQTT_TOPIC, formattedCallsign, { qos: 0 });
+                addMessage(`📤 Sent to display: "${formattedCallsign}" (from ${closestFlight.callsign})`);
                     
                 } else {
                     addMessage('❌ No flights found within 50km radius');
