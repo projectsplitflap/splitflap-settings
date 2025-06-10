@@ -678,6 +678,23 @@
             1800000: '30 minutes'
         };
 
+        // NEW: Text formatting function to ensure exactly 6 characters
+        function formatFor6CharDisplay(text) {
+            // Convert to uppercase and remove invalid characters
+            let formatted = text.toUpperCase().replace(/[^A-Z0-9 ]/g, '');
+            
+            // Ensure exactly 6 characters
+            if (formatted.length > 6) {
+                // If too long, take the first 6 characters
+                formatted = formatted.substring(0, 6);
+            } else if (formatted.length < 6) {
+                // If too short, pad with spaces at the end
+                formatted = formatted.padEnd(6, ' ');
+            }
+            
+            return formatted;
+        }
+
         // Firebase Credential Management
         async function loadCredentialsFromFirebase() {
             if (!firebase_initialized || !database) {
@@ -866,9 +883,10 @@
                 });
                 
                 const displayTime = timeString.substring(0, 5).replace(':', ' ');
+                const formattedTime = formatFor6CharDisplay(displayTime);
                 
-                mqttClient.publish(MQTT_TOPIC, displayTime, { qos: 0 });
-                addMessage(`🕐 Clock: ${timeString} (${selectedTimezone})`);
+                mqttClient.publish(MQTT_TOPIC, formattedTime, { qos: 0 });
+                addMessage(`🕐 Clock: ${timeString} (${selectedTimezone}) -> "${formattedTime}"`);
                 
             } catch (error) {
                 addMessage('❌ Clock error: ' + error.message);
@@ -992,9 +1010,9 @@
                     addMessage('❌ No flights found in the area');
                     document.getElementById('currentFlightInfo').style.display = 'none';
                     
-                    const clearText = '      ';
+                    const clearText = formatFor6CharDisplay('');
                     mqttClient.publish(MQTT_TOPIC, clearText, { qos: 0 });
-                    addMessage('📤 Cleared display - no flights nearby');
+                    addMessage(`📤 Cleared display - no flights nearby -> "${clearText}"`);
                     return;
                 }
                 
@@ -1044,26 +1062,20 @@
                         addMessage('🔥 Flight data saved to Firebase');
                     }
                     
-                    // Format callsign for display using your exact Python logic
+                    // Format callsign for display using exact 6-character formatting
                     let displayCallsign = closestFlight.callsign;
+                    const formattedCallsign = formatFor6CharDisplay(displayCallsign);
                     
-                    // Ensure callsign fits on 6-character display (your Python logic)
-                    if (displayCallsign.length > 6) {
-                        displayCallsign = displayCallsign.substring(displayCallsign.length - 6); // Take last 6 chars
-                    } else if (displayCallsign.length < 6) {
-                        displayCallsign = displayCallsign.padStart(6, ' '); // Right-align with spaces
-                    }
-                    
-                    mqttClient.publish(MQTT_TOPIC, displayCallsign.toUpperCase(), { qos: 0 });
-                    addMessage(`📤 Sent to display: "${displayCallsign.toUpperCase()}"`);
+                    mqttClient.publish(MQTT_TOPIC, formattedCallsign, { qos: 0 });
+                    addMessage(`📤 Sent to display: "${formattedCallsign}"`);
                     
                 } else {
                     addMessage('❌ No flights found within 50km radius');
                     document.getElementById('currentFlightInfo').style.display = 'none';
                     
-                    const clearText = '      ';
+                    const clearText = formatFor6CharDisplay('');
                     mqttClient.publish(MQTT_TOPIC, clearText, { qos: 0 });
-                    addMessage('📤 Cleared display - no flights in range');
+                    addMessage(`📤 Cleared display - no flights in range -> "${clearText}"`);
                 }
                 
             } catch (error) {
@@ -1129,15 +1141,10 @@
                 return;
             }
             
-            let callsign = currentFlightData.callsign;
-            if (callsign.length > 6) {
-                callsign = callsign.substring(callsign.length - 6);
-            } else if (callsign.length < 6) {
-                callsign = callsign.padStart(6, ' ');
-            }
+            const formattedCallsign = formatFor6CharDisplay(currentFlightData.callsign);
             
-            mqttClient.publish(MQTT_TOPIC, callsign.toUpperCase(), { qos: 0 });
-            addMessage(`✈️ Manually sent flight: "${callsign.toUpperCase()}"`);
+            mqttClient.publish(MQTT_TOPIC, formattedCallsign, { qos: 0 });
+            addMessage(`✈️ Manually sent flight: "${formattedCallsign}"`);
         }
 
         function manualFlightUpdate() {
@@ -1209,8 +1216,8 @@
             }
 
             if (typeof resetAirportCycling === 'function') {
-        resetAirportCycling();
-    }
+                resetAirportCycling();
+            }
             
             document.getElementById('mqttServer').value = 'wss://test.mosquitto.org:8081';
             document.getElementById('mqttTopic').value = 'splitflap/matvey/command';
@@ -1317,7 +1324,7 @@
 
         function sendText() {
             const textInput = document.getElementById('textInput');
-            const text = textInput.value.toUpperCase().trim();
+            const text = textInput.value.trim();
             
             if (!text) {
                 alert('Please enter some text!');
@@ -1340,8 +1347,9 @@
             }
             
             try {
-                mqttClient.publish(MQTT_TOPIC, text, { qos: 0 });
-                addMessage(`📤 Sent: "${text}" to ${MQTT_TOPIC}`);
+                const formattedText = formatFor6CharDisplay(text);
+                mqttClient.publish(MQTT_TOPIC, formattedText, { qos: 0 });
+                addMessage(`📤 Sent: "${formattedText}" to ${MQTT_TOPIC}`);
                 textInput.value = '';
             } catch (error) {
                 addMessage('❌ Failed to send message: ' + error.message);
@@ -1365,8 +1373,9 @@
             }
             
             try {
-                mqttClient.publish(MQTT_TOPIC, text, { qos: 0 });
-                addMessage(`📤 Sent: "${text}" to ${MQTT_TOPIC}`);
+                const formattedText = formatFor6CharDisplay(text);
+                mqttClient.publish(MQTT_TOPIC, formattedText, { qos: 0 });
+                addMessage(`📤 Sent: "${formattedText}" to ${MQTT_TOPIC}`);
             } catch (error) {
                 addMessage('❌ Failed to send preset: ' + error.message);
             }
@@ -1383,7 +1392,11 @@
                 toggleFlightTracking();
             }
             
-            sendPreset('      ');
+            const clearText = formatFor6CharDisplay('');
+            if (isConnected) {
+                mqttClient.publish(MQTT_TOPIC, clearText, { qos: 0 });
+                addMessage(`📤 Display cleared: "${clearText}"`);
+            }
         }
 
         function testConnection() {
