@@ -149,6 +149,21 @@
             background: linear-gradient(45deg, #dc3545, #e83e8c);
         }
 
+        .clock-button {
+            background: linear-gradient(45deg, #fd7e14, #ffc107);
+        }
+
+        .clock-active {
+            background: linear-gradient(45deg, #e63946, #dc3545);
+            animation: pulse-button 2s infinite;
+        }
+
+        @keyframes pulse-button {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
         .tabs {
             display: flex;
             margin-top: 40px;
@@ -237,6 +252,20 @@
             margin-bottom: 5px;
         }
 
+        .clock-info {
+            background: linear-gradient(45deg, #17a2b8, #6f42c1);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .clock-info strong {
+            display: block;
+            margin-bottom: 5px;
+        }
+
         small {
             font-size: 12px;
             color: #6c757d;
@@ -300,12 +329,33 @@
         <div class="input-group">
             <label>Quick Messages:</label>
             <div class="preset-buttons">
+                <button class="button preset-button" onclick="sendPreset('MATVEY')">MATVEY</button>
+                <button class="button preset-button" onclick="sendPreset('PILOT')">PILOT</button>
+                <button class="button preset-button" onclick="sendPreset('VIBING')">VIBING</button>
                 <button class="button preset-button" onclick="sendPreset('HELLO')">HELLO</button>
-                <button class="button preset-button" onclick="sendPreset('WORKS')">WORKS</button>
-                <button class="button preset-button" onclick="sendPreset('TEST')">TEST</button>
-                <button class="button preset-button" onclick="sendPreset('123456')">123456</button>
-                <button class="button preset-button" onclick="sendPreset('MQTT')">MQTT</button>
-                <button class="button preset-button" onclick="sendPreset('WOW')">WOW</button>
+                <button class="button preset-button" onclick="sendPreset('CANADA')">CANADA</button>
+                <button class="button preset-button" onclick="sendPreset('RUSSIA')">RUSSIA</button>
+            </div>
+        </div>
+
+        <div class="input-group">
+            <label>Clock Mode:</label>
+            <div class="preset-buttons">
+                <button class="button clock-button" id="clockButton" onclick="toggleClock()">🕐 Start Clock</button>
+                <select id="timezoneSelect" onchange="updateTimezone()">
+                    <option value="America/New_York">EST - Eastern Time</option>
+                    <option value="America/Chicago">CST - Central Time</option>
+                    <option value="America/Denver">MST - Mountain Time</option>
+                    <option value="America/Los_Angeles">PST - Pacific Time</option>
+                    <option value="America/Toronto">EST - Toronto</option>
+                    <option value="America/Vancouver">PST - Vancouver</option>
+                    <option value="Europe/London">GMT - London</option>
+                    <option value="Europe/Paris">CET - Paris</option>
+                    <option value="Europe/Moscow">MSK - Moscow</option>
+                    <option value="Asia/Tokyo">JST - Tokyo</option>
+                    <option value="Asia/Shanghai">CST - Beijing</option>
+                    <option value="UTC">UTC</option>
+                </select>
             </div>
         </div>
 
@@ -332,6 +382,11 @@
                 <div class="warning">
                     <strong>⚠️ Using Public MQTT Server</strong>
                     Anyone can see your messages on public servers. Consider setting up your own MQTT broker for privacy.
+                </div>
+
+                <div class="clock-info">
+                    <strong>🕐 Clock Mode Info</strong>
+                    When clock mode is active, the display will show the current time (HH:MM format) and update every minute. The clock will automatically handle timezone conversion.
                 </div>
 
                 <div class="input-group">
@@ -384,6 +439,11 @@
         let reconnectAttempts = 0;
         const maxReconnectAttempts = 5;
 
+        // Clock Configuration
+        let clockMode = false;
+        let clockInterval = null;
+        let selectedTimezone = 'America/New_York'; // Default to EST
+
         // Switch between tabs
         function switchTab(evt, tabName) {
             // Hide all tab contents
@@ -405,6 +465,71 @@
             // Log tab switch
             const tabText = evt.currentTarget.textContent.trim();
             addMessage(`📂 Switched to ${tabText} tab`);
+        }
+
+        // Clock functionality
+        function toggleClock() {
+            const clockButton = document.getElementById('clockButton');
+            
+            if (clockMode) {
+                // Stop clock
+                clockMode = false;
+                clearInterval(clockInterval);
+                clockButton.textContent = '🕐 Start Clock';
+                clockButton.className = 'button clock-button';
+                addMessage('🕐 Clock mode stopped');
+            } else {
+                // Start clock
+                if (!isConnected) {
+                    alert('Not connected to MQTT broker! Check the Advanced Settings tab.');
+                    return;
+                }
+                
+                clockMode = true;
+                clockButton.textContent = '⏹️ Stop Clock';
+                clockButton.className = 'button clock-button clock-active';
+                addMessage(`🕐 Clock mode started (${selectedTimezone})`);
+                
+                // Send time immediately
+                sendCurrentTime();
+                
+                // Set up interval to send time every minute
+                clockInterval = setInterval(sendCurrentTime, 60000);
+            }
+        }
+
+        function sendCurrentTime() {
+            if (!isConnected || !clockMode) return;
+            
+            try {
+                const now = new Date();
+                const timeString = now.toLocaleTimeString('en-US', {
+                    timeZone: selectedTimezone,
+                    hour12: false,
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                
+                // Format as HH:MM (6 characters exactly)
+                const displayTime = timeString.substring(0, 5).replace(':', ' ');
+                
+                mqttClient.publish(MQTT_TOPIC, displayTime, { qos: 0 });
+                addMessage(`🕐 Clock: ${timeString} (${selectedTimezone})`);
+                
+            } catch (error) {
+                addMessage('❌ Clock error: ' + error.message);
+            }
+        }
+
+        function updateTimezone() {
+            const timezoneSelect = document.getElementById('timezoneSelect');
+            selectedTimezone = timezoneSelect.value;
+            addMessage(`🌍 Timezone updated to: ${selectedTimezone}`);
+            
+            // If clock is running, send updated time immediately
+            if (clockMode) {
+                sendCurrentTime();
+            }
         }
 
         // Update MQTT server selection
@@ -453,12 +578,19 @@
 
         // Reset to default settings
         function resetToDefaults() {
+            // Stop clock if running
+            if (clockMode) {
+                toggleClock();
+            }
+            
             document.getElementById('mqttServer').value = 'wss://test.mosquitto.org:8081';
             document.getElementById('mqttTopic').value = 'splitflap/matvey/command';
+            document.getElementById('timezoneSelect').value = 'America/New_York';
             document.getElementById('customServerGroup').style.display = 'none';
             
             MQTT_BROKER = 'wss://test.mosquitto.org:8081';
             MQTT_TOPIC = 'splitflap/matvey/command';
+            selectedTimezone = 'America/New_York';
             
             addMessage('🔄 Reset to default settings');
             reconnectMQTT();
@@ -500,6 +632,12 @@
                     isConnected = false;
                     updateStatus('Disconnected from MQTT broker', false);
                     addMessage('⚠️ MQTT connection closed');
+                    
+                    // Stop clock if running when connection is lost
+                    if (clockMode) {
+                        addMessage('⚠️ Clock stopped due to connection loss');
+                        toggleClock();
+                    }
                 });
                 
                 mqttClient.on('reconnect', function() {
@@ -560,6 +698,12 @@
                 return;
             }
             
+            // Stop clock mode if user sends manual text
+            if (clockMode) {
+                addMessage('🕐 Clock stopped - manual message sent');
+                toggleClock();
+            }
+            
             try {
                 mqttClient.publish(MQTT_TOPIC, text, { qos: 0 });
                 addMessage(`📤 Sent: "${text}" to ${MQTT_TOPIC}`);
@@ -576,6 +720,12 @@
                 return;
             }
             
+            // Stop clock mode if user sends preset
+            if (clockMode) {
+                addMessage('🕐 Clock stopped - preset message sent');
+                toggleClock();
+            }
+            
             try {
                 mqttClient.publish(MQTT_TOPIC, text, { qos: 0 });
                 addMessage(`📤 Sent: "${text}" to ${MQTT_TOPIC}`);
@@ -586,6 +736,11 @@
 
         // Clear display
         function clearDisplay() {
+            // Stop clock mode if user clears display
+            if (clockMode) {
+                addMessage('🕐 Clock stopped - display cleared');
+                toggleClock();
+            }
             sendPreset('      '); // Send spaces to clear
         }
 
