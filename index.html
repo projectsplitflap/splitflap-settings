@@ -8,6 +8,10 @@
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="https://unpkg.com/mqtt@4.3.7/dist/mqtt.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+<script src="airport-cycling.js"></script>
     <style>
         * {
             margin: 0;
@@ -299,6 +303,31 @@
             margin-top: 10px;
         }
 
+        .interval-info {
+            background: linear-gradient(45deg, #28a745, #20c997);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .interval-info .pulse-dot {
+            width: 8px;
+            height: 8px;
+            background: white;
+            border-radius: 50%;
+            animation: pulse-dot 2s infinite;
+        }
+
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.2); }
+        }
+
         small {
             font-size: 12px;
             color: #6c757d;
@@ -435,6 +464,20 @@
                 </div>
 
                 <div class="input-group">
+                    <label for="flightIntervalSelect">Check for Flights Every:</label>
+                    <select id="flightIntervalSelect" onchange="updateFlightInterval()">
+                        <option value="120000">⚡ 2 minutes (Frequent)</option>
+                        <option value="300000" selected>🔄 5 minutes (Normal)</option>
+                        <option value="900000">⏰ 15 minutes (Moderate)</option>
+                        <option value="1800000">🕐 30 minutes (Conservative)</option>
+                    </select>
+                    <div id="intervalStatus" class="interval-info" style="display: none;">
+                        <div class="pulse-dot"></div>
+                        <span id="intervalText">Checking flights every 5 minutes</span>
+                    </div>
+                </div>
+
+                <div class="input-group">
                     <label>OpenSky Network Setup:</label>
                     <div id="credentialsStatus" style="padding: 10px; border-radius: 5px; margin-bottom: 10px; background: #f8f9fa;">
                         <span id="credentialsStatusText">🔍 Checking for saved credentials...</span>
@@ -471,6 +514,37 @@
                 <div style="text-align: center; margin-top: 20px;">
                     <button class="button" onclick="manualFlightUpdate()">🔄 Manual Update</button>
                     <button class="button" onclick="clearFlightData()">🗑️ Clear Flight Data</button>
+                </div>
+                <div class="input-group" style="margin-top: 30px; border-top: 2px solid #e9ecef; padding-top: 20px;">
+                    <label>🇨🇦 Canadian Airport Cycling:</label>
+                    <div class="preset-buttons">
+                        <button class="button preset-button" id="airportButton" onclick="toggleAirportCycling()">🛬 Start Airport Cycle</button>
+                        <select id="airportIntervalSelect" onchange="updateAirportCycleDuration()">
+                            <option value="120000" selected>⚡ 2 minutes</option>
+                            <option value="300000">🔄 5 minutes</option>
+                            <option value="900000">⏰ 15 minutes</option>
+                            <option value="1800000">🕐 30 minutes</option>
+                        </select>
+                    </div>
+                    <div id="airportIntervalStatus" class="interval-info" style="display: none;">
+                        <div class="pulse-dot"></div>
+                        <span id="airportIntervalText">Cycling airports every 2 minutes</span>
+                    </div>
+                </div>
+                
+                <div id="currentAirportInfo" class="flight-info" style="display: none;">
+                    <div class="flight-callsign" id="airportCode">-</div>
+                    <div class="flight-details">
+                        <div><strong>Position:</strong> <span id="airportPosition">-</span></div>
+                        <div><strong>Type:</strong> Canadian Airport (ICAO)</div>
+                        <div><strong>Total Airports:</strong> 267 airports</div>
+                        <div><strong>Last Updated:</strong> <span id="airportLastUpdate">-</span></div>
+                    </div>
+                </div>
+                
+                <div style="text-align: center; margin-top: 15px;">
+                    <button class="button preset-button" onclick="sendCurrentAirport()">📡 Send Current Airport</button>
+                    <button class="button" onclick="clearAirportData()">🗑️ Clear Airport Data</button>
                 </div>
             </div>
         </div>
@@ -582,6 +656,7 @@
         let selectedLocation = 'toronto';
         let currentFlightData = null;
         let openskyCredentials = null; // Will store credentials from Firebase
+        let flightCheckInterval = 300000; // Default: 5 minutes
 
         // Predefined locations with exact coordinates from your Python code
         const locations = {
@@ -593,6 +668,14 @@
             yellowknife: { name: 'Yellowknife, NT', lat: 62.4540, lon: -114.3718 },
             whitehorse: { name: 'Whitehorse, YT', lat: 60.7212, lon: -135.0568 },
             moscow: { name: 'Moscow, Russia', lat: 55.7558, lon: 37.6176 }
+        };
+
+        // Flight interval options
+        const intervalOptions = {
+            120000: '2 minutes',
+            300000: '5 minutes',
+            900000: '15 minutes',
+            1800000: '30 minutes'
         };
 
         // Firebase Credential Management
@@ -698,6 +781,33 @@
             document.getElementById('openskyPassword').value = '';
         }
 
+        // Flight interval management
+        function updateFlightInterval() {
+            const intervalSelect = document.getElementById('flightIntervalSelect');
+            const newInterval = parseInt(intervalSelect.value);
+            
+            if (newInterval !== flightCheckInterval) {
+                flightCheckInterval = newInterval;
+                const intervalText = intervalOptions[flightCheckInterval];
+                
+                addMessage(`⏰ Flight check interval updated to ${intervalText}`);
+                
+                // Update the status display
+                const intervalStatus = document.getElementById('intervalStatus');
+                const intervalTextElement = document.getElementById('intervalText');
+                
+                if (flightTrackingMode) {
+                    intervalTextElement.textContent = `Checking flights every ${intervalText}`;
+                    intervalStatus.style.display = 'flex';
+                    
+                    // Restart the interval with new timing
+                    clearInterval(flightTrackingInterval);
+                    flightTrackingInterval = setInterval(fetchFlightData, flightCheckInterval);
+                    addMessage(`🔄 Flight tracker restarted with ${intervalText} interval`);
+                }
+            }
+        }
+
         // Switch between tabs
         function switchTab(evt, tabName) {
             const tabContents = document.getElementsByClassName('tab-content');
@@ -790,14 +900,18 @@
             // Legacy function - credentials now loaded from Firebase
             return;
         }
+
         function toggleFlightTracking() {
             const flightButton = document.getElementById('flightButton');
+            const intervalStatus = document.getElementById('intervalStatus');
+            const intervalText = intervalOptions[flightCheckInterval];
             
             if (flightTrackingMode) {
                 flightTrackingMode = false;
                 clearInterval(flightTrackingInterval);
                 flightButton.textContent = '🛩️ Start Flight Tracker';
                 flightButton.className = 'button flight-button';
+                intervalStatus.style.display = 'none';
                 addMessage('✈️ Flight tracking stopped');
                 document.getElementById('currentFlightInfo').style.display = 'none';
             } else {
@@ -809,10 +923,16 @@
                 flightTrackingMode = true;
                 flightButton.textContent = '⏹️ Stop Flight Tracker';
                 flightButton.className = 'button flight-button flight-active';
+                
+                // Show interval status
+                intervalStatus.style.display = 'flex';
+                document.getElementById('intervalText').textContent = `Checking flights every ${intervalText}`;
+                
                 addMessage(`✈️ Flight tracking started for ${locations[selectedLocation].name}`);
+                addMessage(`⏰ Checking for flights every ${intervalText}`);
                 
                 fetchFlightData();
-                flightTrackingInterval = setInterval(fetchFlightData, 60000); // Every 1 minute like your Python code
+                flightTrackingInterval = setInterval(fetchFlightData, flightCheckInterval);
             }
         }
 
@@ -824,8 +944,16 @@
                 
                 const location = locations[selectedLocation];
                 const radiusKm = 50; // Same as your Python code
-                const username = document.getElementById('openskyUsername').value || 'jenndryden';
-                const password = document.getElementById('openskyPassword').value || 'Happy#12345';
+                
+                // Use credentials from Firebase if available, otherwise fall back to form inputs
+                let username, password;
+                if (openskyCredentials) {
+                    username = openskyCredentials.username;
+                    password = openskyCredentials.password;
+                } else {
+                    username = document.getElementById('openskyUsername').value || 'jenndryden';
+                    password = document.getElementById('openskyPassword').value || 'Happy#12345';
+                }
                 
                 // Calculate bounding box using your exact Python formula
                 const latRadius = radiusKm / 111;
@@ -1079,17 +1207,24 @@
             if (flightTrackingMode) {
                 toggleFlightTracking();
             }
+
+            if (typeof resetAirportCycling === 'function') {
+        resetAirportCycling();
+    }
             
             document.getElementById('mqttServer').value = 'wss://test.mosquitto.org:8081';
             document.getElementById('mqttTopic').value = 'splitflap/matvey/command';
             document.getElementById('timezoneSelect').value = 'America/New_York';
             document.getElementById('locationSelect').value = 'toronto';
+            document.getElementById('flightIntervalSelect').value = '300000';
             document.getElementById('customServerGroup').style.display = 'none';
+            document.getElementById('intervalStatus').style.display = 'none';
             
             MQTT_BROKER = 'wss://test.mosquitto.org:8081';
             MQTT_TOPIC = 'splitflap/matvey/command';
             selectedTimezone = 'America/New_York';
             selectedLocation = 'toronto';
+            flightCheckInterval = 300000;
             
             addMessage('🔄 Reset to default settings');
             reconnectMQTT();
