@@ -11,7 +11,7 @@ const AIRLINE_CODE_MAPPING = {
     'SWA': 'WN',     // Southwest Airlines -> WN
     'FLE': 'F8',     // Flair Airlines -> F8
     'WJA': 'WS',     // WestJet -> WS
-    'ROU': 'AC',     // Air Canada Rouge -> AC
+    'ROU': 'RV',     // Air Canada Rouge -> RV
     'RPA': 'UA',     // Republic Airways -> UA (United Express)
     'ASH': 'UA',     // Mesa Airlines -> UA (United Express)
     'PTR': 'PD',     // Porter Airlines -> P3
