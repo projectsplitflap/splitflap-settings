@@ -4,8 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Splitflap Display Controller</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.15.0/firebase-app-compat.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.15.0/firebase-database-compat.min.js"></script>
+    <script src="https://unpkg.com/mqtt@4.3.7/dist/mqtt.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -17,399 +16,617 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            color: #333;
+            padding: 20px;
+            color: white;
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 600px;
             margin: 0 auto;
-            padding: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            color: #333;
         }
 
-        .header {
+        h1 {
             text-align: center;
-            color: white;
             margin-bottom: 30px;
+            color: #667eea;
+            font-size: 2.5rem;
+            font-weight: 300;
         }
 
-        .header h1 {
-            font-size: 2.5em;
-            margin-bottom: 10px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-        }
-
-        .status-panel {
-            background: white;
-            border-radius: 12px;
+        .status {
+            background: linear-gradient(45deg, #f8f9fa, #e9ecef);
             padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
-        }
-
-        .connection-status {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 15px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            border-left: 5px solid #667eea;
         }
 
         .status-indicator {
+            display: inline-block;
             width: 12px;
             height: 12px;
             border-radius: 50%;
-            background: #e74c3c;
+            margin-right: 10px;
+            animation: pulse 2s infinite;
         }
 
-        .status-indicator.connected {
-            background: #27ae60;
+        .status-connected {
+            background: #28a745;
         }
 
-        .control-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-
-        .control-panel {
-            background: white;
-            border-radius: 12px;
-            padding: 25px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
-            transition: transform 0.2s ease;
-        }
-
-        .control-panel:hover {
-            transform: translateY(-2px);
-        }
-
-        .panel-title {
-            font-size: 1.4em;
-            font-weight: 600;
-            margin-bottom: 20px;
-            color: #2c3e50;
-            border-bottom: 2px solid #ecf0f1;
-            padding-bottom: 10px;
-        }
-
-        .btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 1em;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            margin: 5px;
-            min-width: 120px;
-        }
-
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-        }
-
-        .btn:active {
-            transform: translateY(0);
-        }
-
-        .btn.secondary {
-            background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);
-        }
-
-        .btn.danger {
-            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
-        }
-
-        .btn:disabled {
-            background: #bdc3c7;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .input-group {
-            margin-bottom: 15px;
-        }
-
-        .input-group label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: 500;
-            color: #2c3e50;
-        }
-
-        .input-group input, .input-group select {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #ecf0f1;
-            border-radius: 8px;
-            font-size: 1em;
-            transition: border-color 0.3s ease;
-        }
-
-        .input-group input:focus, .input-group select:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-
-        .module-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(40px, 1fr));
-            gap: 4px;
-            margin: 15px 0;
-        }
-
-        .module {
-            aspect-ratio: 1;
-            background: #34495e;
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-family: 'Courier New', monospace;
-            font-weight: bold;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .module:hover {
-            background: #667eea;
-        }
-
-        .module.error {
-            background: #e74c3c;
-        }
-
-        .module.moving {
-            background: #f39c12;
-            animation: pulse 1s infinite;
+        .status-disconnected {
+            background: #dc3545;
         }
 
         @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.7; }
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
         }
 
-        .log-panel {
-            background: #2c3e50;
-            color: #ecf0f1;
-            padding: 15px;
-            border-radius: 8px;
-            font-family: 'Courier New', monospace;
-            font-size: 0.9em;
-            max-height: 200px;
-            overflow-y: auto;
-            margin-top: 15px;
-        }
-
-        .mode-tabs {
-            display: flex;
-            background: #ecf0f1;
-            border-radius: 8px;
-            padding: 4px;
+        .input-group {
             margin-bottom: 20px;
         }
 
-        .mode-tab {
-            flex: 1;
-            padding: 10px;
-            text-align: center;
-            border-radius: 6px;
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        input[type="text"], select {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            font-size: 18px;
+            transition: all 0.3s ease;
+            background: #f8f9fa;
+        }
+
+        input[type="text"]:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .button {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
-            font-weight: 500;
+            margin: 5px;
+            display: inline-block;
+            text-decoration: none;
+            text-align: center;
+            min-width: 120px;
         }
 
-        .mode-tab.active {
-            background: white;
-            color: #667eea;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
         }
 
-        .firebase-status {
-            padding: 10px;
-            border-radius: 6px;
-            margin-bottom: 15px;
-            font-size: 0.9em;
+        .button:active {
+            transform: translateY(0);
         }
 
-        .firebase-status.connected {
-            background: #d5edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-
-        .firebase-status.disconnected {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-
-        .preset-grid {
+        .button-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .preset-buttons {
+            display: flex;
+            flex-wrap: wrap;
             gap: 10px;
+            margin-top: 15px;
         }
 
-        .flight-info {
+        .preset-button {
+            background: linear-gradient(45deg, #28a745, #20c997);
+            padding: 10px 20px;
+            font-size: 14px;
+            min-width: auto;
+        }
+
+        .clear-button {
+            background: linear-gradient(45deg, #dc3545, #e83e8c);
+        }
+
+        .tabs {
+            display: flex;
+            margin-top: 40px;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .tab {
+            padding: 15px 25px;
             background: #f8f9fa;
+            border: none;
+            border-radius: 10px 10px 0 0;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-right: 5px;
+            color: #6c757d;
+            border-bottom: 3px solid transparent;
+        }
+
+        .tab.active {
+            background: white;
+            color: #667eea;
+            border-bottom: 3px solid #667eea;
+            transform: translateY(-2px);
+        }
+
+        .tab:hover:not(.active) {
+            background: #e9ecef;
+            color: #495057;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 20px 0;
+            min-height: 200px;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .messages {
+            background: #f8f9fa;
+            border-radius: 10px;
             padding: 15px;
-            border-radius: 8px;
-            margin: 10px 0;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            border: 1px solid #e9ecef;
         }
 
-        .flight-info h4 {
-            color: #2c3e50;
-            margin-bottom: 10px;
+        .message {
+            padding: 5px 0;
+            border-bottom: 1px solid #e9ecef;
         }
 
-        .flight-info p {
-            margin: 5px 0;
-            font-size: 0.9em;
+        .message:last-child {
+            border-bottom: none;
+        }
+
+        .timestamp {
+            color: #6c757d;
+            font-size: 12px;
+        }
+
+        .advanced-settings {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 15px;
+            border: 2px solid #e9ecef;
+        }
+
+        .warning {
+            background: linear-gradient(45deg, #ffc107, #fd7e14);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .warning strong {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        small {
+            font-size: 12px;
+            color: #6c757d;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #6c757d;
+            font-size: 14px;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                margin: 10px;
+                padding: 20px;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .button-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .tabs {
+                flex-direction: column;
+            }
+            
+            .tab {
+                margin-right: 0;
+                margin-bottom: 5px;
+                border-radius: 10px;
+                border-bottom: none;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <h1>🔤 Splitflap Display Controller</h1>
-            <p>Control your mechanical split-flap display</p>
+        <h1>🔤 Splitflap Controller</h1>
+        
+        <div class="status">
+            <div id="status">
+                <span id="statusIndicator" class="status-indicator status-disconnected"></span>
+                <strong id="statusText">Connecting...</strong>
+            </div>
         </div>
 
-        <div class="status-panel">
-            <div class="connection-status">
-                <div class="status-indicator" id="serialStatus"></div>
-                <span id="serialStatusText">Device: Disconnected</span>
-            </div>
-            <div id="firebaseStatus" class="firebase-status disconnected">
-                Firebase: Disconnected
-            </div>
-            <div id="modulePreview" class="module-grid"></div>
+        <div class="input-group">
+            <label for="textInput">Text to Display (max 6 characters):</label>
+            <input type="text" id="textInput" placeholder="Enter your message..." maxlength="6" autocomplete="off">
         </div>
 
-        <div class="control-grid">
-            <!-- Connection Panel -->
-            <div class="control-panel">
-                <h3 class="panel-title">🔌 Connection</h3>
+        <div class="button-grid">
+            <button class="button" onclick="sendText()">Send to Display</button>
+            <button class="button clear-button" onclick="clearDisplay()">Clear Display</button>
+        </div>
+
+        <div class="input-group">
+            <label>Quick Messages:</label>
+            <div class="preset-buttons">
+                <button class="button preset-button" onclick="sendPreset('HELLO')">HELLO</button>
+                <button class="button preset-button" onclick="sendPreset('WORKS')">WORKS</button>
+                <button class="button preset-button" onclick="sendPreset('TEST')">TEST</button>
+                <button class="button preset-button" onclick="sendPreset('123456')">123456</button>
+                <button class="button preset-button" onclick="sendPreset('MQTT')">MQTT</button>
+                <button class="button preset-button" onclick="sendPreset('WOW')">WOW</button>
+            </div>
+        </div>
+
+        <!-- Tab Navigation -->
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab(event, 'messages-tab')">📝 Messages</button>
+            <button class="tab" onclick="switchTab(event, 'settings-tab')">⚙️ Advanced Settings</button>
+        </div>
+
+        <!-- Messages Tab -->
+        <div id="messages-tab" class="tab-content active">
+            <div class="messages" id="messages">
+                <div class="message">
+                    <span class="timestamp">[Loading...]</span> Initializing connection...
+                </div>
+            </div>
+        </div>
+
+        <!-- Advanced Settings Tab -->
+        <div id="settings-tab" class="tab-content">
+            <div class="advanced-settings">
+                <h3 style="margin-top: 0; color: #495057;">⚙️ Advanced Settings</h3>
+                
+                <div class="warning">
+                    <strong>⚠️ Using Public MQTT Server</strong>
+                    Anyone can see your messages on public servers. Consider setting up your own MQTT broker for privacy.
+                </div>
+
                 <div class="input-group">
-                    <label>ESP32 IP Address or URL</label>
-                    <input type="text" id="esp32IP" placeholder="192.168.1.100 or http://splitflap.local" value="http://splitflap.local">
-                    <small style="color: #666; margin-top: 5px; display: block;">
-                        Enter the IP address from your setup, or try http://splitflap.local
+                    <label for="mqttServer">MQTT Server:</label>
+                    <select id="mqttServer" onchange="updateMQTTServer()">
+                        <option value="wss://test.mosquitto.org:8081">test.mosquitto.org (Free, Public)</option>
+                        <option value="wss://broker.hivemq.com:8884">broker.hivemq.com (Free, Public)</option>
+                        <option value="wss://mqtt.eclipse.org:443/mqtt">mqtt.eclipse.org (Free, Public)</option>
+                        <option value="custom">Custom Server...</option>
+                    </select>
+                </div>
+
+                <div class="input-group" id="customServerGroup" style="display: none;">
+                    <label for="customServer">Custom MQTT Server (WSS URL):</label>
+                    <input type="text" id="customServer" placeholder="wss://your-mqtt-server.com:8883" autocomplete="off">
+                    <small style="color: #6c757d; display: block; margin-top: 5px;">
+                        Must be a WebSocket Secure (WSS) URL that supports browser connections
                     </small>
                 </div>
-                <button class="btn" id="connectWiFi">Connect to Display</button>
-                
-                <div style="margin-top: 20px;">
-                    <button class="btn secondary" id="connectFirebase">Connect to Firebase</button>
-                    <div class="input-group" style="margin-top: 15px;">
-                        <label>Firebase Config (JSON)</label>
-                        <textarea id="firebaseConfig" rows="4" style="width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #ddd;">
-{
-  "apiKey": "your-api-key",
-  "authDomain": "your-project.firebaseapp.com",
-  "databaseURL": "https://your-project.firebasedatabase.app",
-  "projectId": "your-project-id"
-}</textarea>
-                    </div>
-                </div>
-            </div>
 
-            <!-- Display Control Panel -->
-            <div class="control-panel">
-                <h3 class="panel-title">📝 Display Control</h3>
-                <div class="mode-tabs">
-                    <div class="mode-tab active" data-mode="manual">Manual</div>
-                    <div class="mode-tab" data-mode="time">Time</div>
-                    <div class="mode-tab" data-mode="flight">Flight</div>
-                </div>
-
-                <div id="manualMode">
-                    <div class="input-group">
-                        <label>Text to Display</label>
-                        <input type="text" id="customText" placeholder="Enter text..." maxlength="12">
-                    </div>
-                    <button class="btn" id="sendText">Update Display</button>
-                    
-                    <div class="preset-grid" style="margin-top: 15px;">
-                        <button class="btn secondary preset" data-text="HELLO">HELLO</button>
-                        <button class="btn secondary preset" data-text="WORLD">WORLD</button>
-                        <button class="btn secondary preset" data-text="OPEN">OPEN</button>
-                        <button class="btn secondary preset" data-text="CLOSED">CLOSED</button>
-                    </div>
-                </div>
-
-                <div id="timeMode" style="display: none;">
-                    <div class="input-group">
-                        <label>Time Format</label>
-                        <select id="timeFormat">
-                            <option value="HH:MM">24 Hour (HH:MM)</option>
-                            <option value="HH:MM:SS">24 Hour with Seconds</option>
-                            <option value="h:MM A">12 Hour (h:MM AM/PM)</option>
-                        </select>
-                    </div>
-                    <button class="btn" id="startTimeDisplay">Start Time Display</button>
-                    <button class="btn danger" id="stopTimeDisplay">Stop Time Display</button>
-                </div>
-
-                <div id="flightMode" style="display: none;">
-                    <div class="input-group">
-                        <label>Location</label>
-                        <input type="text" id="flightLocation" placeholder="City or Airport Code" value="Toronto">
-                    </div>
-                    <div class="input-group">
-                        <label>Radius (km)</label>
-                        <input type="number" id="flightRadius" value="50" min="10" max="200">
-                    </div>
-                    <button class="btn" id="startFlightTracking">Start Flight Tracking</button>
-                    <button class="btn danger" id="stopFlightTracking">Stop Flight Tracking</button>
-                    <div id="flightInfo" class="flight-info" style="display: none;"></div>
-                </div>
-            </div>
-
-            <!-- Calibration Panel -->
-            <div class="control-panel">
-                <h3 class="panel-title">⚙️ Calibration</h3>
-                <p style="margin-bottom: 15px;">Click on a module below to calibrate it, or use the buttons for all modules.</p>
-                <button class="btn" id="homeAll">Home All Modules</button>
-                <button class="btn secondary" id="calibrateAll">Calibrate All</button>
-                <button class="btn danger" id="resetAll">Reset All</button>
-                
-                <div class="input-group" style="margin-top: 15px;">
-                    <label>Test Character</label>
-                    <input type="text" id="testChar" maxlength="1" value="A">
-                    <button class="btn secondary" id="testCharBtn" style="margin-top: 5px;">Send to All</button>
-                </div>
-            </div>
-
-            <!-- Remote Control Panel -->
-            <div class="control-panel">
-                <h3 class="panel-title">🌐 Remote Control</h3>
                 <div class="input-group">
-                    <label>Device Name</label>
-                    <input type="text" id="deviceName" placeholder="My Splitflap" value="splitflap-001">
+                    <label for="mqttTopic">MQTT Topic:</label>
+                    <input type="text" id="mqttTopic" value="splitflap/matvey/command" autocomplete="off">
+                    <small style="color: #6c757d; display: block; margin-top: 5px;">
+                        This is the MQTT topic your ESP32 is listening to
+                    </small>
                 </div>
-                <button class="btn" id="enableRemote">Enable Remote Control</button>
-                <button class="btn danger" id="disableRemote">Disable Remote Control</button>
-                
-                <div style="margin-top: 15px;">
-                    <p><strong>Remote URL:</strong></p>
-                    <p id="remoteUrl" style="font-family: monospace; font-size: 0.9em; word-break: break-all; background: #f8f9fa; padding: 8px; border-radius: 4px;">Connect to Firebase first</p>
+
+                <div style="text-align: center; margin-top: 20px;">
+                    <button class="button" onclick="testConnection()">Test Connection</button>
+                    <button class="button" onclick="reconnectMQTT()">Reconnect</button>
+                    <button class="button" onclick="resetToDefaults()">Reset to Defaults</button>
                 </div>
             </div>
         </div>
 
-        <div class="status-panel">
-            <h3 class="panel-title">📊 System Logs</h3>
-            <div id="systemLogs" class="log-panel">
-                System initialized. Ready to connect...
-            </div>
+        <div class="footer">
+            <p>🌐 GitHub Pages Splitflap Controller</p>
+            <p>Send messages to your splitflap display from anywhere!</p>
         </div>
     </div>
 
-    <script src="app.js"></script>
+    <script>
+        // MQTT Configuration
+        let MQTT_BROKER = 'wss://test.mosquitto.org:8081';
+        let MQTT_TOPIC = 'splitflap/matvey/command';
+        
+        let mqttClient = null;
+        let isConnected = false;
+        let reconnectAttempts = 0;
+        const maxReconnectAttempts = 5;
+
+        // Switch between tabs
+        function switchTab(evt, tabName) {
+            // Hide all tab contents
+            const tabContents = document.getElementsByClassName('tab-content');
+            for (let i = 0; i < tabContents.length; i++) {
+                tabContents[i].classList.remove('active');
+            }
+            
+            // Remove active class from all tabs
+            const tabs = document.getElementsByClassName('tab');
+            for (let i = 0; i < tabs.length; i++) {
+                tabs[i].classList.remove('active');
+            }
+            
+            // Show selected tab content and mark tab as active
+            document.getElementById(tabName).classList.add('active');
+            evt.currentTarget.classList.add('active');
+            
+            // Log tab switch
+            const tabText = evt.currentTarget.textContent.trim();
+            addMessage(`📂 Switched to ${tabText} tab`);
+        }
+
+        // Update MQTT server selection
+        function updateMQTTServer() {
+            const serverSelect = document.getElementById('mqttServer');
+            const customGroup = document.getElementById('customServerGroup');
+            
+            if (serverSelect.value === 'custom') {
+                customGroup.style.display = 'block';
+            } else {
+                customGroup.style.display = 'none';
+                MQTT_BROKER = serverSelect.value;
+                if (mqttClient) {
+                    addMessage('🔄 Switching to ' + serverSelect.options[serverSelect.selectedIndex].text);
+                    reconnectMQTT();
+                }
+            }
+        }
+
+        // Apply custom server
+        function applyCustomServer() {
+            const customServer = document.getElementById('customServer').value;
+            if (customServer && customServer.startsWith('wss://')) {
+                MQTT_BROKER = customServer;
+                addMessage('🔄 Switching to custom server: ' + customServer);
+                reconnectMQTT();
+            } else {
+                alert('Please enter a valid WSS URL (e.g., wss://your-server.com:8883)');
+            }
+        }
+
+        // Update MQTT topic
+        function updateTopic() {
+            const topicInput = document.getElementById('mqttTopic');
+            MQTT_TOPIC = topicInput.value;
+            addMessage('📋 Topic updated to: ' + MQTT_TOPIC);
+        }
+
+        // Reconnect MQTT
+        function reconnectMQTT() {
+            if (mqttClient) {
+                mqttClient.end(true);
+            }
+            setTimeout(() => initMQTT(), 1000);
+        }
+
+        // Reset to default settings
+        function resetToDefaults() {
+            document.getElementById('mqttServer').value = 'wss://test.mosquitto.org:8081';
+            document.getElementById('mqttTopic').value = 'splitflap/matvey/command';
+            document.getElementById('customServerGroup').style.display = 'none';
+            
+            MQTT_BROKER = 'wss://test.mosquitto.org:8081';
+            MQTT_TOPIC = 'splitflap/matvey/command';
+            
+            addMessage('🔄 Reset to default settings');
+            reconnectMQTT();
+        }
+
+        // Initialize MQTT connection
+        function initMQTT() {
+            try {
+                addMessage('🔗 Connecting to ' + MQTT_BROKER);
+                
+                // Connect to MQTT broker using WebSocket
+                mqttClient = mqtt.connect(MQTT_BROKER, {
+                    reconnectPeriod: 5000,
+                    connectTimeout: 10000,
+                    keepalive: 60
+                });
+                
+                mqttClient.on('connect', function() {
+                    isConnected = true;
+                    reconnectAttempts = 0;
+                    updateStatus('Connected to ' + MQTT_BROKER, true);
+                    addMessage('✅ Connected successfully!');
+                });
+                
+                mqttClient.on('error', function(error) {
+                    isConnected = false;
+                    updateStatus('Connection error: ' + error.message, false);
+                    addMessage('❌ MQTT Error: ' + error.message);
+                    
+                    // Try different server if connection fails repeatedly
+                    reconnectAttempts++;
+                    if (reconnectAttempts >= maxReconnectAttempts) {
+                        addMessage('⚠️ Max reconnection attempts reached. Try switching to a different MQTT server.');
+                        reconnectAttempts = 0;
+                    }
+                });
+                
+                mqttClient.on('close', function() {
+                    isConnected = false;
+                    updateStatus('Disconnected from MQTT broker', false);
+                    addMessage('⚠️ MQTT connection closed');
+                });
+                
+                mqttClient.on('reconnect', function() {
+                    addMessage('🔄 Attempting to reconnect... (attempt ' + (reconnectAttempts + 1) + ')');
+                });
+                
+                mqttClient.on('offline', function() {
+                    isConnected = false;
+                    updateStatus('MQTT client offline', false);
+                    addMessage('📡 MQTT client went offline');
+                });
+                
+            } catch (error) {
+                updateStatus('Failed to initialize MQTT: ' + error.message, false);
+                addMessage('❌ Failed to initialize MQTT: ' + error.message);
+            }
+        }
+
+        // Update connection status
+        function updateStatus(text, connected) {
+            const statusText = document.getElementById('statusText');
+            const statusIndicator = document.getElementById('statusIndicator');
+            
+            statusText.textContent = text;
+            statusIndicator.className = 'status-indicator ' + (connected ? 'status-connected' : 'status-disconnected');
+        }
+
+        // Add message to log
+        function addMessage(message) {
+            const messagesDiv = document.getElementById('messages');
+            const timestamp = new Date().toLocaleTimeString();
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message';
+            messageDiv.innerHTML = `<span class="timestamp">[${timestamp}]</span> ${message}`;
+            
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            
+            // Keep only last 25 messages
+            while (messagesDiv.children.length > 25) {
+                messagesDiv.removeChild(messagesDiv.firstChild);
+            }
+        }
+
+        // Send text to splitflap display
+        function sendText() {
+            const textInput = document.getElementById('textInput');
+            const text = textInput.value.toUpperCase().trim();
+            
+            if (!text) {
+                alert('Please enter some text!');
+                return;
+            }
+            
+            if (!isConnected) {
+                alert('Not connected to MQTT broker! Check the Advanced Settings tab.');
+                return;
+            }
+            
+            try {
+                mqttClient.publish(MQTT_TOPIC, text, { qos: 0 });
+                addMessage(`📤 Sent: "${text}" to ${MQTT_TOPIC}`);
+                textInput.value = '';
+            } catch (error) {
+                addMessage('❌ Failed to send message: ' + error.message);
+            }
+        }
+
+        // Send preset message
+        function sendPreset(text) {
+            if (!isConnected) {
+                alert('Not connected to MQTT broker! Check the Advanced Settings tab.');
+                return;
+            }
+            
+            try {
+                mqttClient.publish(MQTT_TOPIC, text, { qos: 0 });
+                addMessage(`📤 Sent: "${text}" to ${MQTT_TOPIC}`);
+            } catch (error) {
+                addMessage('❌ Failed to send preset: ' + error.message);
+            }
+        }
+
+        // Clear display
+        function clearDisplay() {
+            sendPreset('      '); // Send spaces to clear
+        }
+
+        // Add connection test button functionality
+        function testConnection() {
+            if (!isConnected) {
+                addMessage('🔄 Testing connection...');
+                initMQTT();
+            } else {
+                addMessage('✅ Already connected to ' + MQTT_BROKER);
+            }
+        }
+
+        // Handle Enter key in text input
+        document.getElementById('textInput').addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                sendText();
+            }
+        });
+
+        // Auto-convert to uppercase as user types
+        document.getElementById('textInput').addEventListener('input', function(event) {
+            event.target.value = event.target.value.toUpperCase();
+        });
+
+        // Update topic when changed
+        document.getElementById('mqttTopic').addEventListener('change', updateTopic);
+
+        // Apply custom server when Enter is pressed
+        document.getElementById('customServer').addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                applyCustomServer();
+            }
+        });
+
+        // Initialize when page loads
+        window.addEventListener('load', function() {
+            addMessage('🚀 Starting Splitflap Controller...');
+            addMessage('ℹ️ Ready to send messages to your display!');
+            initMQTT();
+        });
+    </script>
 </body>
 </html>
