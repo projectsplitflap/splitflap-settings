@@ -417,7 +417,7 @@
                 
                 <div class="clock-info">
                     <strong>🛩️ Live Flight Tracking with OpenSky Network</strong>
-                    Shows the callsign of the closest aircraft to your selected location. Credentials are securely stored in Firebase and automatically loaded when you visit the site.
+                    Shows the callsign of the closest aircraft to your selected location. Uses your OpenSky credentials for authenticated access with higher rate limits.
                 </div>
 
                 <div class="input-group">
@@ -435,19 +435,10 @@
                 </div>
 
                 <div class="input-group">
-                    <label>OpenSky Network Setup:</label>
-                    <div id="credentialsStatus" style="padding: 10px; border-radius: 5px; margin-bottom: 10px; background: #f8f9fa;">
-                        <span id="credentialsStatusText">🔍 Checking for saved credentials...</span>
-                    </div>
-                    <div id="credentialsForm" style="display: none;">
-                        <input type="text" id="openskyUsername" placeholder="OpenSky Username" autocomplete="off">
-                        <input type="password" id="openskyPassword" placeholder="OpenSky Password" autocomplete="off">
-                        <div style="margin-top: 10px;">
-                            <button class="button preset-button" onclick="saveCredentialsToFirebase()">🔐 Save to Firebase</button>
-                            <button class="button clear-button" onclick="clearCredentialsFromFirebase()">🗑️ Remove</button>
-                        </div>
-                    </div>
-                    <button class="button" id="setupCredentialsBtn" onclick="showCredentialsForm()" style="display: none;">⚙️ Setup Credentials</button>
+                    <label>OpenSky Network Credentials:</label>
+                    <input type="text" id="openskyUsername" placeholder="OpenSky Username" value="jenndryden" autocomplete="off">
+                    <input type="text" id="openskyPassword" placeholder="OpenSky Password" value="Happy#12345" autocomplete="off">
+                    <small>These credentials are used for authenticated OpenSky API access with higher rate limits.</small>
                 </div>
 
                 <div class="input-group">
@@ -581,7 +572,6 @@
         let flightTrackingInterval = null;
         let selectedLocation = 'toronto';
         let currentFlightData = null;
-        let openskyCredentials = null; // Will store credentials from Firebase
 
         // Predefined locations with exact coordinates from your Python code
         const locations = {
@@ -594,109 +584,6 @@
             whitehorse: { name: 'Whitehorse, YT', lat: 60.7212, lon: -135.0568 },
             moscow: { name: 'Moscow, Russia', lat: 55.7558, lon: 37.6176 }
         };
-
-        // Firebase Credential Management
-        async function loadCredentialsFromFirebase() {
-            if (!firebase_initialized || !database) {
-                updateCredentialsStatus('❌ Firebase not connected', 'error');
-                return false;
-            }
-
-            try {
-                const snapshot = await database.ref('config/opensky').once('value');
-                const credentials = snapshot.val();
-                
-                if (credentials && credentials.username && credentials.password) {
-                    openskyCredentials = credentials;
-                    updateCredentialsStatus('✅ Credentials loaded from Firebase', 'success');
-                    return true;
-                } else {
-                    updateCredentialsStatus('⚙️ No credentials found - setup required', 'warning');
-                    document.getElementById('setupCredentialsBtn').style.display = 'inline-block';
-                    return false;
-                }
-            } catch (error) {
-                updateCredentialsStatus('❌ Error loading credentials: ' + error.message, 'error');
-                return false;
-            }
-        }
-
-        async function saveCredentialsToFirebase() {
-            if (!firebase_initialized || !database) {
-                alert('Firebase not connected!');
-                return;
-            }
-
-            const username = document.getElementById('openskyUsername').value.trim();
-            const password = document.getElementById('openskyPassword').value.trim();
-
-            if (!username || !password) {
-                alert('Please enter both username and password');
-                return;
-            }
-
-            try {
-                await database.ref('config/opensky').set({
-                    username: username,
-                    password: password,
-                    savedAt: Date.now()
-                });
-
-                openskyCredentials = { username, password };
-                updateCredentialsStatus('✅ Credentials saved securely to Firebase', 'success');
-                hideCredentialsForm();
-                addMessage('🔐 OpenSky credentials saved to Firebase');
-            } catch (error) {
-                alert('Error saving credentials: ' + error.message);
-                addMessage('❌ Failed to save credentials: ' + error.message);
-            }
-        }
-
-        async function clearCredentialsFromFirebase() {
-            if (!firebase_initialized || !database) {
-                alert('Firebase not connected!');
-                return;
-            }
-
-            try {
-                await database.ref('config/opensky').remove();
-                openskyCredentials = null;
-                updateCredentialsStatus('⚙️ Credentials removed - setup required', 'warning');
-                document.getElementById('setupCredentialsBtn').style.display = 'inline-block';
-                addMessage('🗑️ OpenSky credentials removed from Firebase');
-            } catch (error) {
-                alert('Error removing credentials: ' + error.message);
-            }
-        }
-
-        function updateCredentialsStatus(message, type) {
-            const statusElement = document.getElementById('credentialsStatusText');
-            const statusContainer = document.getElementById('credentialsStatus');
-            
-            statusElement.textContent = message;
-            
-            // Update styling based on type
-            statusContainer.style.background = type === 'success' ? '#d4edda' : 
-                                             type === 'error' ? '#f8d7da' : 
-                                             type === 'warning' ? '#fff3cd' : '#f8f9fa';
-            statusContainer.style.color = type === 'success' ? '#155724' : 
-                                         type === 'error' ? '#721c24' : 
-                                         type === 'warning' ? '#856404' : '#495057';
-        }
-
-        function showCredentialsForm() {
-            document.getElementById('credentialsForm').style.display = 'block';
-            document.getElementById('setupCredentialsBtn').style.display = 'none';
-            document.getElementById('openskyUsername').value = '';
-            document.getElementById('openskyPassword').value = '';
-        }
-
-        function hideCredentialsForm() {
-            document.getElementById('credentialsForm').style.display = 'none';
-            document.getElementById('setupCredentialsBtn').style.display = 'none';
-            document.getElementById('openskyUsername').value = '';
-            document.getElementById('openskyPassword').value = '';
-        }
 
         // Switch between tabs
         function switchTab(evt, tabName) {
@@ -775,21 +662,7 @@
             }
         }
 
-        // Credential management functions
-        function saveCredentials() {
-            // Legacy function - now redirects to Firebase
-            addMessage('⚠️ Please use the Firebase credential storage in the Flight Tracker tab');
-        }
-
-        function clearCredentials() {
-            // Legacy function - now redirects to Firebase
-            addMessage('⚠️ Please use the Firebase credential storage in the Flight Tracker tab');
-        }
-
-        function loadCredentials() {
-            // Legacy function - credentials now loaded from Firebase
-            return;
-        }
+        // Flight Tracker Functions - Using your exact Python logic
         function toggleFlightTracking() {
             const flightButton = document.getElementById('flightButton');
             
@@ -1286,13 +1159,6 @@
             
             initFirebase();
             initMQTT();
-            
-            // Load credentials from Firebase after a short delay to ensure Firebase is ready
-            setTimeout(async () => {
-                if (firebase_initialized) {
-                    await loadCredentialsFromFirebase();
-                }
-            }, 1000);
         });
     </script>
 </body>
