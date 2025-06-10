@@ -4,26 +4,16 @@ A web-based controller for mechanical split-flap displays built with the Chainli
 
 ## 🚀 Features
 
-- **Real-time Control**: Direct WiFi connection to your ESP32-based splitflap display
 - **Multiple Display Modes**: Manual text, automatic time display, flight tracking
 - **Remote Control**: Firebase integration for worldwide remote access
-- **Module Calibration**: Individual module calibration and diagnostics
 - **User-Friendly**: No coding required - works with any modern web browser
 
 ## 🔗 Quick Start
 
-1. **Access the Controller**: Visit [your-username.github.io/splitflap-controller](https://your-username.github.io/splitflap-controller)
-2. **Connect Your Display**: Enter your display's IP address or use `http://splitflap.local`
-3. **Start Controlling**: Send text, display time, or track flights!
+1. **Access the Controller**
+2. **Start Controlling**: Send text, display time, or track flights!
 
 ## 📱 Setup Your Splitflap Display
-
-### First-Time WiFi Setup
-
-1. Power on your splitflap display
-2. Connect to the "Splitflap-Setup" WiFi network (password: `splitflap123`)
-3. Follow the automatic setup portal to connect to your home WiFi
-4. Bookmark the provided control URL
 
 ### Finding Your Display
 
@@ -40,14 +30,9 @@ Your ESP32 must be running firmware with WiFi and HTTP server support. The firmw
 - `POST /api/home` - Home all modules
 - `POST /api/calibrate` - Calibrate modules
 
-## 🌐 Remote Control (Optional)
+## 🌐 Remote Control 
 
-Enable Firebase integration to control your display from anywhere:
-
-1. Create a Firebase project at [console.firebase.google.com](https://console.firebase.google.com)
-2. Enable Realtime Database
-3. Copy your Firebase config and paste it in the web interface
-4. Enable remote control and share the generated URL
+Uses Firebase integration to control your display from anywhere:
 
 ## 🛠️ For Developers
 
