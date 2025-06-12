@@ -980,8 +980,18 @@
 
         // NEW: Text formatting function to ensure exactly 6 characters
         function formatFor6CharDisplay(text, preserveBlanks = false) {
-    // Convert to uppercase and handle special characters
-    let formatted = text.toUpperCase().replace(/[^A-Z0-9 .?$'#,!@&-]/g, '');
+    // Don't convert color commands to uppercase - preserve r, y, g, p, w
+    let formatted = text.replace(/[^A-Za-z0-9 .?$'#,!@&-]/g, '');
+    
+    // Convert to uppercase except for color commands
+    formatted = formatted.replace(/[A-Z]/g, match => match.toUpperCase())
+                      .replace(/[a-z]/g, match => {
+                          // Keep color commands lowercase, convert others to uppercase
+                          if (['r', 'y', 'g', 'p', 'w'].includes(match)) {
+                              return match; // Keep color commands lowercase
+                          }
+                          return match.toUpperCase();
+                      });
     
     if (preserveBlanks) {
         // For clock mode, preserve the exact length and use spaces for blanks
