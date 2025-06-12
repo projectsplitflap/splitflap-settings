@@ -4,16 +4,16 @@
 // Mapping of ICAO codes to shorter display codes
 const AIRLINE_CODE_MAPPING = {
     // Your specified common ones
-    'ENY': 'AA',     // Envoy Air -> American (regional)
-    'DAL': 'DA',     // Delta Air Lines -> DA
+    'ENY': 'MQ',     // Envoy Air -> American (regional)
+    'DAL': 'DL',     // Delta Air Lines -> DA
     'AAL': 'AA',     // American Airlines -> AA
     'UAL': 'UA',     // United Airlines -> UA
     'SWA': 'WN',     // Southwest Airlines -> WN
     'FLE': 'F8',     // Flair Airlines -> F8
     'WJA': 'WS',     // WestJet -> WS
     'ROU': 'RV',     // Air Canada Rouge -> RV
-    'RPA': 'UA',     // Republic Airways -> UA (United Express)
-    'ASH': 'UA',     // Mesa Airlines -> UA (United Express)
+    'RPA': 'YX',     // Republic Airways -> UA (United Express)
+    'ASH': 'YV',     // Mesa Airlines -> UA (United Express)
     'PTR': 'PD',     // Porter Airlines -> P3
     'CHAL': 'CL',    // Chalks -> CL
     'CRQ': 'YN',     // Air Creebec -> YN
@@ -21,16 +21,16 @@ const AIRLINE_CODE_MAPPING = {
     'NRL': 'N5',     // Nolinor Aviation -> N5
     'FDX': 'FX',     // FedEx -> FX
     'NKS': 'NK',     // Spirit Airlines -> NK
-    'JZA': 'AC',     // Air Canada Jazz -> AC
+    'JZA': 'QK',     // Air Canada Jazz -> AC
     'ACA': 'AC',     // Air Canada -> AC
     'NDL': 'MB',     // Not clear mapping, keeping as specified
     'JBU': 'B6',     // JetBlue -> B6
     'MXY': 'MX',     // Breeze Airways -> MX
     'HAL': 'HA',     // Hawaiian Airlines -> HA
     'SKW': 'OO',     // SkyWest -> OO
-    'EDV': 'DL',     // Endeavor Air -> DL (Delta Connection)
-    'JIA': 'AA',     // PSA Airlines -> AA (American Eagle)
-    'QXE': 'AS',     // Horizon Air -> AS (Alaska)
+    'EDV': '9E',     // Endeavor Air -> DL (Delta Connection)
+    'JIA': 'OH',     // PSA Airlines -> AA (American Eagle)
+    'QXE': 'QX',     // Horizon Air -> AS (Alaska)
     'CPA': 'CX',     // Cathay Pacific -> CX
     'CSB': '2I',     // Not found, keeping as specified
     
