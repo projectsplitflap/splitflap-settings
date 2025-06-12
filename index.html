@@ -106,6 +106,164 @@
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
 
+        /* Character Picker Styles */
+        .character-picker {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+
+        .all-characters-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(45px, 1fr));
+            gap: 8px;
+            max-width: 100%;
+        }
+
+        .char-button {
+            background: white;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            padding: 12px 8px;
+            font-size: 18px;
+            font-weight: bold;
+            font-family: 'Courier New', monospace;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+        }
+
+        .char-button:hover {
+            border-color: #667eea;
+            background: #f0f4ff;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(102, 126, 234, 0.2);
+        }
+
+        .char-button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(102, 126, 234, 0.2);
+        }
+
+        .char-button.color-red {
+            background: #f44336;
+            border-color: #d32f2f;
+            color: white;
+        }
+
+        .char-button.color-red:hover {
+            background: #e53935;
+            border-color: #c62828;
+        }
+
+        .char-button.color-yellow {
+            background: #ffeb3b;
+            border-color: #fbc02d;
+            color: #333;
+        }
+
+        .char-button.color-yellow:hover {
+            background: #fdd835;
+            border-color: #f9a825;
+        }
+
+        .char-button.color-green {
+            background: #4caf50;
+            border-color: #388e3c;
+            color: white;
+        }
+
+        .char-button.color-green:hover {
+            background: #43a047;
+            border-color: #2e7d32;
+        }
+
+        .char-button.color-purple {
+            background: #9c27b0;
+            border-color: #7b1fa2;
+            color: white;
+        }
+
+        .char-button.color-purple:hover {
+            background: #8e24aa;
+            border-color: #6a1b9a;
+        }
+
+        .char-button.color-white {
+            background: #ffffff;
+            border-color: #9e9e9e;
+            color: #333;
+            border-width: 3px;
+        }
+
+        .char-button.color-white:hover {
+            background: #f5f5f5;
+            border-color: #757575;
+        }
+
+        .char-button.space-char {
+            background: #e3f2fd;
+            border-color: #1976d2;
+            color: #1565c0;
+            font-size: 14px;
+        }
+
+        .char-button.space-char:hover {
+            background: #bbdefb;
+            border-color: #1565c0;
+        }
+
+        .text-display {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 20px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+            letter-spacing: 8px;
+            margin: 15px 0;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 3px solid #34495e;
+        }
+
+        .position-indicator {
+            display: flex;
+            justify-content: center;
+            gap: 3px;
+            margin: 10px 0;
+            display: none; /* Hidden since we removed it */
+        }
+
+        .position-box {
+            width: 30px;
+            height: 30px;
+            border: 2px solid #dee2e6;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            background: white;
+        }
+
+        .position-box.active {
+            border-color: #667eea;
+            background: #f0f4ff;
+            color: #667eea;
+        }
+
         .button {
             background: linear-gradient(45deg, #667eea, #764ba2);
             color: white;
@@ -365,6 +523,10 @@
                 border-radius: 10px;
                 border-bottom: none;
             }
+
+            .character-grid {
+                grid-template-columns: repeat(8, 1fr);
+            }
         }
     </style>
 </head>
@@ -381,7 +543,304 @@
 
         <div class="input-group">
             <label for="textInput">Text to Display (max 6 characters):</label>
-            <input type="text" id="textInput" placeholder="Enter your message..." maxlength="6" autocomplete="off">
+            <input type="text" id="textInput" placeholder="Type or click characters below..." maxlength="6" autocomplete="off">
+            
+            <!-- Visual Display of Current Text -->
+            <div class="text-display" id="textDisplay">______</div>
+            
+            <!-- Simple Character Grid - All Available Characters -->
+            <div class="character-picker">
+                <h4 style="text-align: center; margin-bottom: 15px; color: #495057;">🎯 Click any character to add it:</h4>
+                
+                <!-- Static HTML buttons - no JavaScript needed for creation -->
+                <div class="all-characters-grid">
+                    <!-- Space -->
+                    <button class="char-button space-char" onclick="addCharacter(' ')" title="Add SPACE"> </button>
+                    
+                    <!-- Letters A-Z -->
+                    <button class="char-button" onclick="addCharacter('A')" title="Add A">A</button>
+                    <button class="char-button" onclick="addCharacter('B')" title="Add B">B</button>
+                    <button class="char-button" onclick="addCharacter('C')" title="Add C">C</button>
+                    <button class="char-button" onclick="addCharacter('D')" title="Add D">D</button>
+                    <button class="char-button" onclick="addCharacter('E')" title="Add E">E</button>
+                    <button class="char-button" onclick="addCharacter('F')" title="Add F">F</button>
+                    <button class="char-button" onclick="addCharacter('G')" title="Add G">G</button>
+                    <button class="char-button" onclick="addCharacter('H')" title="Add H">H</button>
+                    <button class="char-button" onclick="addCharacter('I')" title="Add I">I</button>
+                    <button class="char-button" onclick="addCharacter('J')" title="Add J">J</button>
+                    <button class="char-button" onclick="addCharacter('K')" title="Add K">K</button>
+                    <button class="char-button" onclick="addCharacter('L')" title="Add L">L</button>
+                    <button class="char-button" onclick="addCharacter('M')" title="Add M">M</button>
+                    <button class="char-button" onclick="addCharacter('N')" title="Add N">N</button>
+                    <button class="char-button" onclick="addCharacter('O')" title="Add O">O</button>
+                    <button class="char-button" onclick="addCharacter('P')" title="Add P">P</button>
+                    <button class="char-button" onclick="addCharacter('Q')" title="Add Q">Q</button>
+                    <button class="char-button" onclick="addCharacter('R')" title="Add R">R</button>
+                    <button class="char-button" onclick="addCharacter('S')" title="Add S">S</button>
+                    <button class="char-button" onclick="addCharacter('T')" title="Add T">T</button>
+                    <button class="char-button" onclick="addCharacter('U')" title="Add U">U</button>
+                    <button class="char-button" onclick="addCharacter('V')" title="Add V">V</button>
+                    <button class="char-button" onclick="addCharacter('W')" title="Add W">W</button>
+                    <button class="char-button" onclick="addCharacter('X')" title="Add X">X</button>
+                    <button class="char-button" onclick="addCharacter('Y')" title="Add Y">Y</button>
+                    <button class="char-button" onclick="addCharacter('Z')" title="Add Z">Z</button>
+
+                    <!-- Numbers 0-9 -->
+                    <button class="char-button" onclick="addCharacter('0')" title="Add 0">0</button>
+                    <button class="char-button" onclick="addCharacter('1')" title="Add 1">1</button>
+                    <button class="char-button" onclick="addCharacter('2')" title="Add 2">2</button>
+                    <button class="char-button" onclick="addCharacter('3')" title="Add 3">3</button>
+                    <button class="char-button" onclick="addCharacter('4')" title="Add 4">4</button>
+                    <button class="char-button" onclick="addCharacter('5')" title="Add 5">5</button>
+                    <button class="char-button" onclick="addCharacter('6')" title="Add 6">6</button>
+                    <button class="char-button" onclick="addCharacter('7')" title="Add 7">7</button>
+                    <button class="char-button" onclick="addCharacter('8')" title="Add 8">8</button>
+                    <button class="char-button" onclick="addCharacter('9')" title="Add 9">9</button>
+                    
+                    <!-- Colors -->
+                    <button class="char-button color-red" onclick="addCharacter('r')" title="Add Red Color">●</button>
+                    <button class="char-button color-yellow" onclick="addCharacter('y')" title="Add Yellow Color">●</button>
+                    <button class="char-button color-green" onclick="addCharacter('g')" title="Add Green Color">●</button>
+                    <button class="char-button color-purple" onclick="addCharacter('p')" title="Add Purple Color">●</button>
+                    <button class="char-button color-white" onclick="addCharacter('w')" title="Add White Color">●</button>
+                    
+                    <!-- Special Characters -->
+                    <button class="char-button" onclick="addCharacter('.')" title="Add .">.</button>
+                    <button class="char-button" onclick="addCharacter('?')" title="Add ?">?</button>
+                    <button class="char-button" onclick="addCharacter('-')" title="Add -">-</button>
+                    <button class="char-button" onclick="addCharacter('$')" title="Add $">$</button>
+                    <button class="char-button" onclick="addCharacter(`'`)" title="Add '">'</button>
+                    <button class="char-button" onclick="addCharacter('#')" title="Add #">#</button>
+                    <button class="char-button" onclick="addCharacter(',')" title="Add ,">,</button>
+                    <button class="char-button" onclick="addCharacter('!')" title="Add !">!</button>
+                    <button class="char-button" onclick="addCharacter('@')" title="Add @">@</button>
+                    <button class="char-button" onclick="addCharacter('&')" title="Add &">&</button>
+        </div>
+
+        <div class="button-grid" style="grid-template-columns: 1fr; gap: 10px;">
+            <button class="button" onclick="sendText()">Send to Display</button>
+            <button class="button clear-button" onclick="clearDisplay()">Clear Display</button>
+        </div>
+
+        <div class="input-group">
+            <label>Quick Messages:</label>
+            <div class="preset-buttons">
+                <button class="button preset-button" onclick="sendPreset('MATVEY')">MATVEY</button>
+                <button class="button preset-button" onclick="sendPreset('PILOT')">PILOT</button>
+                <button class="button preset-button" onclick="sendPreset('VIBING')">VIBING</button>
+                <button class="button preset-button" onclick="sendPreset('FLYING')">FLYING</button>
+                <button class="button preset-button" onclick="sendPreset('TRAVEL')">TRAVEL</button>
+                <button class="button preset-button" onclick="sendPreset('HELLO')">HELLO</button>
+                <button class="button preset-button" onclick="sendPreset('CANADA')">CANADA</button>
+                <button class="button preset-button" onclick="sendPreset('RUSSIA')">RUSSIA</button>
+            </div>
+        </div>
+
+        <div class="input-group">
+            <label>Clock Mode:</label>
+            <div class="preset-buttons">
+                <button class="button clock-button" id="clockButton" onclick="toggleClock()">🕐 Start Clock</button>
+                <select id="timezoneSelect" onchange="updateTimezone()">
+                    <option value="America/New_York">EST - Eastern Time</option>
+                    <option value="America/Chicago">CST - Central Time</option>
+                    <option value="America/Denver">MST - Mountain Time</option>
+                    <option value="America/Los_Angeles">PST - Pacific Time</option>
+                    <option value="America/Toronto">EST - Toronto</option>
+                    <option value="America/Vancouver">PST - Vancouver</option>
+                    <option value="Europe/London">GMT - London</option>
+                    <option value="Europe/Paris">CET - Paris</option>
+                    <option value="Europe/Moscow">MSK - Moscow</option>
+                    <option value="Asia/Tokyo">JST - Tokyo</option>
+                    <option value="Asia/Shanghai">CST - Beijing</option>
+                    <option value="UTC">UTC</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Tab Navigation -->
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab(event, 'messages-tab')">📝 Messages</button>
+            <button class="tab" onclick="switchTab(event, 'flight-tab')">✈️ Flight Tracker</button>
+            <button class="tab" onclick="switchTab(event, 'settings-tab')">⚙️ Settings</button>
+        </div>
+
+        <!-- Messages Tab -->
+        <div id="messages-tab" class="tab-content active">
+            <div class="messages" id="messages">
+                <div class="message">
+                    <span class="timestamp">[Loading...]</span> Initializing connection...
+                </div>
+            </div>
+        </div>
+
+        <!-- Flight Tracker Tab -->
+        <div id="flight-tab" class="tab-content">
+            <div class="advanced-settings">
+                <h3 style="margin-top: 0; color: #495057;">✈️ Flight Tracker</h3>
+                
+                <div class="clock-info">
+                    <strong>🛩️ Live Flight Tracking with OpenSky Network</strong>
+                    Shows the callsign of the closest aircraft to your selected location. Credentials are securely stored in Firebase and automatically loaded when you visit the site.
+                </div>
+
+                <div class="input-group">
+                    <label for="locationSelect">Track Flights Near:</label>
+                    <select id="locationSelect" onchange="updateLocation()">
+                        <option value="toronto">🏢 Toronto, ON (43.6532, -79.3832)</option>
+                        <option value="wolfville">🍎 Wolfville, NS (45.0918, -64.3643)</option>
+                        <option value="waterloo">🎓 Waterloo, ON (43.4643, -80.5204)</option>
+                        <option value="vancouver">🌊 Vancouver, BC (49.2827, -123.1207)</option>
+                        <option value="nyc">🗽 New York City (40.7128, -74.0060)</option>
+                        <option value="yellowknife">💎 Yellowknife, NT (62.4540, -114.3718)</option>
+                        <option value="whitehorse">❄️ Whitehorse, YT (60.7212, -135.0568)</option>
+                        <option value="moscow">🏛️ Moscow, Russia (55.7558, 37.6176)</option>
+                    </select>
+                </div>
+
+                <div class="input-group">
+                    <label for="flightIntervalSelect">Check for Flights Every:</label>
+                    <select id="flightIntervalSelect" onchange="updateFlightInterval()">
+                        <option value="120000">⚡ 2 minutes (Frequent)</option>
+                        <option value="300000" selected>🔄 5 minutes (Normal)</option>
+                        <option value="900000">⏰ 15 minutes (Moderate)</option>
+                        <option value="1800000">🕐 30 minutes (Conservative)</option>
+                    </select>
+                    <div id="intervalStatus" class="interval-info" style="display: none;">
+                        <div class="pulse-dot"></div>
+                        <span id="intervalText">Checking flights every 5 minutes</span>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>OpenSky Network Setup:</label>
+                    <div id="credentialsStatus" style="padding: 10px; border-radius: 5px; margin-bottom: 10px; background: #f8f9fa;">
+                        <span id="credentialsStatusText">🔍 Checking for saved credentials...</span>
+                    </div>
+                    <div id="credentialsForm" style="display: none;">
+                        <input type="text" id="openskyUsername" placeholder="OpenSky Username" autocomplete="off">
+                        <input type="password" id="openskyPassword" placeholder="OpenSky Password" autocomplete="off">
+                        <div style="margin-top: 10px;">
+                            <button class="button preset-button" onclick="saveCredentialsToFirebase()">🔐 Save to Firebase</button>
+                            <button class="button clear-button" onclick="clearCredentialsFromFirebase()">🗑️ Remove</button>
+                        </div>
+                    </div>
+                    <button class="button" id="setupCredentialsBtn" onclick="showCredentialsForm()" style="display: none;">⚙️ Setup Credentials</button>
+                </div>
+
+                <div class="input-group">
+                    <label>Flight Tracking Control:</label>
+                    <div class="preset-buttons">
+                        <button class="button flight-button" id="flightButton" onclick="toggleFlightTracking()">🛩️ Start Flight Tracker</button>
+                        <button class="button preset-button" onclick="sendCurrentFlight()">📡 Send Current Flight</button>
+                    </div>
+                </div>
+
+                <div id="currentFlightInfo" class="flight-info" style="display: none;">
+                    <div class="flight-callsign" id="flightCallsign">-</div>
+                    <div class="flight-details">
+                        <div><strong>Distance:</strong> <span id="flightDistance">-</span></div>
+                        <div><strong>Altitude:</strong> <span id="flightAltitude">-</span></div>
+                        <div><strong>Country:</strong> <span id="flightCountry">-</span></div>
+                        <div><strong>Last Updated:</strong> <span id="flightLastUpdate">-</span></div>
+                    </div>
+                </div>
+
+                <div style="text-align: center; margin-top: 20px;">
+                    <button class="button" onclick="manualFlightUpdate()">🔄 Manual Update</button>
+                    <button class="button" onclick="clearFlightData()">🗑️ Clear Flight Data</button>
+                </div>
+                <div class="input-group" style="margin-top: 30px; border-top: 2px solid #e9ecef; padding-top: 20px;">
+                    <label>🇨🇦 Canadian Airport Cycling:</label>
+                    <div class="preset-buttons">
+                        <button class="button preset-button" id="airportButton" onclick="toggleAirportCycling()">🛬 Start Airport Cycle</button>
+                        <select id="airportIntervalSelect" onchange="updateAirportCycleDuration()">
+                            <option value="120000" selected>⚡ 2 minutes</option>
+                            <option value="300000">🔄 5 minutes</option>
+                            <option value="900000">⏰ 15 minutes</option>
+                            <option value="1800000">🕐 30 minutes</option>
+                        </select>
+                    </div>
+                    <div id="airportIntervalStatus" class="interval-info" style="display: none;">
+                        <div class="pulse-dot"></div>
+                        <span id="airportIntervalText">Cycling airports every 2 minutes</span>
+                    </div>
+                </div>
+                
+                <div id="currentAirportInfo" class="flight-info" style="display: none;">
+                    <div class="flight-callsign" id="airportCode">-</div>
+                    <div class="flight-details">
+                        <div><strong>Position:</strong> <span id="airportPosition">-</span></div>
+                        <div><strong>Type:</strong> Canadian Airport (ICAO)</div>
+                        <div><strong>Total Airports:</strong> 267 airports</div>
+                        <div><strong>Last Updated:</strong> <span id="airportLastUpdate">-</span></div>
+                    </div>
+                </div>
+                
+                <div style="text-align: center; margin-top: 15px;">
+                    <button class="button preset-button" onclick="sendCurrentAirport()">📡 Send Current Airport</button>
+                    <button class="button" onclick="clearAirportData()">🗑️ Clear Airport Data</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Advanced Settings Tab -->
+        <div id="settings-tab" class="tab-content">
+            <div class="advanced-settings">
+                <h3 style="margin-top: 0; color: #495057;">⚙️ Advanced Settings</h3>
+                
+                <div class="warning">
+                    <strong>⚠️ Using Public MQTT Server</strong>
+                    Anyone can see your messages on public servers. Consider setting up your own MQTT broker for privacy.
+                </div>
+
+                <div class="clock-info">
+                    <strong>🕐 Clock Mode Info</strong>
+                    When clock mode is active, the display will show the current time (HH MM format) and update every minute. The clock will automatically handle timezone conversion.
+                </div>
+
+                <div class="input-group">
+                    <label for="mqttServer">MQTT Server:</label>
+                    <select id="mqttServer" onchange="updateMQTTServer()">
+                        <option value="wss://test.mosquitto.org:8081">test.mosquitto.org (Free, Public)</option>
+                        <option value="wss://broker.hivemq.com:8884">broker.hivemq.com (Free, Public)</option>
+                        <option value="wss://mqtt.eclipse.org:443/mqtt">mqtt.eclipse.org (Free, Public)</option>
+                        <option value="custom">Custom Server...</option>
+                    </select>
+                </div>
+
+                <div class="input-group" id="customServerGroup" style="display: none;">
+                    <label for="customServer">Custom MQTT Server (WSS URL):</label>
+                    <input type="text" id="customServer" placeholder="wss://your-mqtt-server.com:8883" autocomplete="off">
+                    <small style="color: #6c757d; display: block; margin-top: 5px;">
+                        Must be a WebSocket Secure (WSS) URL that supports browser connections
+                    </small>
+                </div>
+
+                <div class="input-group">
+                    <label for="mqttTopic">MQTT Topic:</label>
+                    <input type="text" id="mqttTopic" value="splitflap/matvey/command" autocomplete="off">
+                    <small style="color: #6c757d; display: block; margin-top: 5px;">
+                        This is the MQTT topic your ESP32 is listening to
+                    </small>
+                </div>
+
+                <div style="text-align: center; margin-top: 20px;">
+                    <button class="button" onclick="testConnection()">Test Connection</button>
+                    <button class="button" onclick="reconnectMQTT()">Reconnect</button>
+                    <button class="button" onclick="resetToDefaults()">Reset to Defaults)" title="Add $">$</button>
+                    <button class="char-button" onclick="addCharacter('\'')" title="Add '">'</button>
+                    <button class="char-button" onclick="addCharacter('#')" title="Add #">#</button>
+                    <button class="char-button" onclick="addCharacter(',')" title="Add ,">,</button>
+                    <button class="char-button" onclick="addCharacter('!')" title="Add !">!</button>
+                    <button class="char-button" onclick="addCharacter('@')" title="Add @">@</button>
+                    <button class="char-button" onclick="addCharacter('&')" title="Add &">&</button>
+                </div>
+                
+                <div style="text-align: center; margin-top: 15px;">
+                    <button class="button clear-button" onclick="clearTextInput()">🗑️ Clear Text</button>
+                    <button class="button clear-button" onclick="backspaceText()">⌫ Backspace</button>
+                </div>
+            </div>
         </div>
 
         <div class="button-grid">
