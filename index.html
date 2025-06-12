@@ -245,6 +245,20 @@
             display: none; /* Hidden since we removed it */
         }
 
+        .control-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+    justify-content: center;
+}
+
+.control-button {
+    background: linear-gradient(45deg, #dc3545, #e83e8c);
+    padding: 8px 16px;
+    font-size: 14px;
+    min-width: auto;
+}
+
         .position-box {
             width: 30px;
             height: 30px;
@@ -543,10 +557,16 @@
 
         <div class="input-group">
             <label for="textInput">Text to Display (max 6 characters):</label>
-            <input type="text" id="textInput" placeholder="Type or click characters below..." maxlength="6" autocomplete="off">
+            <input type="text" id="textInput" placeholder="Type or click characters below..." maxlength="6" autocomplete="off" oninput="updateTextDisplay()">
             
             <!-- Visual Display of Current Text -->
             <div class="text-display" id="textDisplay">______</div>
+
+            <!-- Control buttons for text manipulation -->
+<div class="control-buttons">
+    <button class="button control-button" onclick="clearText()">Clear Text</button>
+    <button class="button control-button" onclick="backspaceText()">Backspace</button>
+</div>
             
             <!-- Simple Character Grid - All Available Characters -->
             <div class="character-picker">
@@ -555,7 +575,7 @@
                 <!-- Static HTML buttons - no JavaScript needed for creation -->
                 <div class="all-characters-grid">
                     <!-- Space -->
-                    <button class="char-button space-char" onclick="addCharacter(' ')" title="Add SPACE"> </button>
+                    <button class="char-button space-char" onclick="addCharacter(' ')" title="Add SPACE">SPC</button>
                     
                     <!-- Letters A-Z -->
                     <button class="char-button" onclick="addCharacter('A')" title="Add A">A</button>
@@ -646,232 +666,7 @@
                     <option value="America/Denver">MST - Mountain Time</option>
                     <option value="America/Los_Angeles">PST - Pacific Time</option>
                     <option value="America/Toronto">EST - Toronto</option>
-                    <option value="America/Vancouver">PST - Vancouver</option>
-                    <option value="Europe/London">GMT - London</option>
-                    <option value="Europe/Paris">CET - Paris</option>
-                    <option value="Europe/Moscow">MSK - Moscow</option>
-                    <option value="Asia/Tokyo">JST - Tokyo</option>
-                    <option value="Asia/Shanghai">CST - Beijing</option>
-                    <option value="UTC">UTC</option>
-                </select>
-            </div>
-        </div>
-
-        <!-- Tab Navigation -->
-        <div class="tabs">
-            <button class="tab active" onclick="switchTab(event, 'messages-tab')">📝 Messages</button>
-            <button class="tab" onclick="switchTab(event, 'flight-tab')">✈️ Flight Tracker</button>
-            <button class="tab" onclick="switchTab(event, 'settings-tab')">⚙️ Settings</button>
-        </div>
-
-        <!-- Messages Tab -->
-        <div id="messages-tab" class="tab-content active">
-            <div class="messages" id="messages">
-                <div class="message">
-                    <span class="timestamp">[Loading...]</span> Initializing connection...
-                </div>
-            </div>
-        </div>
-
-        <!-- Flight Tracker Tab -->
-        <div id="flight-tab" class="tab-content">
-            <div class="advanced-settings">
-                <h3 style="margin-top: 0; color: #495057;">✈️ Flight Tracker</h3>
-                
-                <div class="clock-info">
-                    <strong>🛩️ Live Flight Tracking with OpenSky Network</strong>
-                    Shows the callsign of the closest aircraft to your selected location. Credentials are securely stored in Firebase and automatically loaded when you visit the site.
-                </div>
-
-                <div class="input-group">
-                    <label for="locationSelect">Track Flights Near:</label>
-                    <select id="locationSelect" onchange="updateLocation()">
-                        <option value="toronto">🏢 Toronto, ON (43.6532, -79.3832)</option>
-                        <option value="wolfville">🍎 Wolfville, NS (45.0918, -64.3643)</option>
-                        <option value="waterloo">🎓 Waterloo, ON (43.4643, -80.5204)</option>
-                        <option value="vancouver">🌊 Vancouver, BC (49.2827, -123.1207)</option>
-                        <option value="nyc">🗽 New York City (40.7128, -74.0060)</option>
-                        <option value="yellowknife">💎 Yellowknife, NT (62.4540, -114.3718)</option>
-                        <option value="whitehorse">❄️ Whitehorse, YT (60.7212, -135.0568)</option>
-                        <option value="moscow">🏛️ Moscow, Russia (55.7558, 37.6176)</option>
-                    </select>
-                </div>
-
-                <div class="input-group">
-                    <label for="flightIntervalSelect">Check for Flights Every:</label>
-                    <select id="flightIntervalSelect" onchange="updateFlightInterval()">
-                        <option value="120000">⚡ 2 minutes (Frequent)</option>
-                        <option value="300000" selected>🔄 5 minutes (Normal)</option>
-                        <option value="900000">⏰ 15 minutes (Moderate)</option>
-                        <option value="1800000">🕐 30 minutes (Conservative)</option>
-                    </select>
-                    <div id="intervalStatus" class="interval-info" style="display: none;">
-                        <div class="pulse-dot"></div>
-                        <span id="intervalText">Checking flights every 5 minutes</span>
-                    </div>
-                </div>
-
-                <div class="input-group">
-                    <label>OpenSky Network Setup:</label>
-                    <div id="credentialsStatus" style="padding: 10px; border-radius: 5px; margin-bottom: 10px; background: #f8f9fa;">
-                        <span id="credentialsStatusText">🔍 Checking for saved credentials...</span>
-                    </div>
-                    <div id="credentialsForm" style="display: none;">
-                        <input type="text" id="openskyUsername" placeholder="OpenSky Username" autocomplete="off">
-                        <input type="password" id="openskyPassword" placeholder="OpenSky Password" autocomplete="off">
-                        <div style="margin-top: 10px;">
-                            <button class="button preset-button" onclick="saveCredentialsToFirebase()">🔐 Save to Firebase</button>
-                            <button class="button clear-button" onclick="clearCredentialsFromFirebase()">🗑️ Remove</button>
-                        </div>
-                    </div>
-                    <button class="button" id="setupCredentialsBtn" onclick="showCredentialsForm()" style="display: none;">⚙️ Setup Credentials</button>
-                </div>
-
-                <div class="input-group">
-                    <label>Flight Tracking Control:</label>
-                    <div class="preset-buttons">
-                        <button class="button flight-button" id="flightButton" onclick="toggleFlightTracking()">🛩️ Start Flight Tracker</button>
-                        <button class="button preset-button" onclick="sendCurrentFlight()">📡 Send Current Flight</button>
-                    </div>
-                </div>
-
-                <div id="currentFlightInfo" class="flight-info" style="display: none;">
-                    <div class="flight-callsign" id="flightCallsign">-</div>
-                    <div class="flight-details">
-                        <div><strong>Distance:</strong> <span id="flightDistance">-</span></div>
-                        <div><strong>Altitude:</strong> <span id="flightAltitude">-</span></div>
-                        <div><strong>Country:</strong> <span id="flightCountry">-</span></div>
-                        <div><strong>Last Updated:</strong> <span id="flightLastUpdate">-</span></div>
-                    </div>
-                </div>
-
-                <div style="text-align: center; margin-top: 20px;">
-                    <button class="button" onclick="manualFlightUpdate()">🔄 Manual Update</button>
-                    <button class="button" onclick="clearFlightData()">🗑️ Clear Flight Data</button>
-                </div>
-                <div class="input-group" style="margin-top: 30px; border-top: 2px solid #e9ecef; padding-top: 20px;">
-                    <label>🇨🇦 Canadian Airport Cycling:</label>
-                    <div class="preset-buttons">
-                        <button class="button preset-button" id="airportButton" onclick="toggleAirportCycling()">🛬 Start Airport Cycle</button>
-                        <select id="airportIntervalSelect" onchange="updateAirportCycleDuration()">
-                            <option value="120000" selected>⚡ 2 minutes</option>
-                            <option value="300000">🔄 5 minutes</option>
-                            <option value="900000">⏰ 15 minutes</option>
-                            <option value="1800000">🕐 30 minutes</option>
-                        </select>
-                    </div>
-                    <div id="airportIntervalStatus" class="interval-info" style="display: none;">
-                        <div class="pulse-dot"></div>
-                        <span id="airportIntervalText">Cycling airports every 2 minutes</span>
-                    </div>
-                </div>
-                
-                <div id="currentAirportInfo" class="flight-info" style="display: none;">
-                    <div class="flight-callsign" id="airportCode">-</div>
-                    <div class="flight-details">
-                        <div><strong>Position:</strong> <span id="airportPosition">-</span></div>
-                        <div><strong>Type:</strong> Canadian Airport (ICAO)</div>
-                        <div><strong>Total Airports:</strong> 267 airports</div>
-                        <div><strong>Last Updated:</strong> <span id="airportLastUpdate">-</span></div>
-                    </div>
-                </div>
-                
-                <div style="text-align: center; margin-top: 15px;">
-                    <button class="button preset-button" onclick="sendCurrentAirport()">📡 Send Current Airport</button>
-                    <button class="button" onclick="clearAirportData()">🗑️ Clear Airport Data</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Advanced Settings Tab -->
-        <div id="settings-tab" class="tab-content">
-            <div class="advanced-settings">
-                <h3 style="margin-top: 0; color: #495057;">⚙️ Advanced Settings</h3>
-                
-                <div class="warning">
-                    <strong>⚠️ Using Public MQTT Server</strong>
-                    Anyone can see your messages on public servers. Consider setting up your own MQTT broker for privacy.
-                </div>
-
-                <div class="clock-info">
-                    <strong>🕐 Clock Mode Info</strong>
-                    When clock mode is active, the display will show the current time (HH MM format) and update every minute. The clock will automatically handle timezone conversion.
-                </div>
-
-                <div class="input-group">
-                    <label for="mqttServer">MQTT Server:</label>
-                    <select id="mqttServer" onchange="updateMQTTServer()">
-                        <option value="wss://test.mosquitto.org:8081">test.mosquitto.org (Free, Public)</option>
-                        <option value="wss://broker.hivemq.com:8884">broker.hivemq.com (Free, Public)</option>
-                        <option value="wss://mqtt.eclipse.org:443/mqtt">mqtt.eclipse.org (Free, Public)</option>
-                        <option value="custom">Custom Server...</option>
-                    </select>
-                </div>
-
-                <div class="input-group" id="customServerGroup" style="display: none;">
-                    <label for="customServer">Custom MQTT Server (WSS URL):</label>
-                    <input type="text" id="customServer" placeholder="wss://your-mqtt-server.com:8883" autocomplete="off">
-                    <small style="color: #6c757d; display: block; margin-top: 5px;">
-                        Must be a WebSocket Secure (WSS) URL that supports browser connections
-                    </small>
-                </div>
-
-                <div class="input-group">
-                    <label for="mqttTopic">MQTT Topic:</label>
-                    <input type="text" id="mqttTopic" value="splitflap/matvey/command" autocomplete="off">
-                    <small style="color: #6c757d; display: block; margin-top: 5px;">
-                        This is the MQTT topic your ESP32 is listening to
-                    </small>
-                </div>
-
-                <div style="text-align: center; margin-top: 20px;">
-                    <button class="button" onclick="testConnection()">Test Connection</button>
-                    <button class="button" onclick="reconnectMQTT()">Reconnect</button>
-                    <button class="button" onclick="resetToDefaults()">Reset to Defaults)" title="Add $">$</button>
-                    <button class="char-button" onclick="addCharacter('\'')" title="Add '">'</button>
-                    <button class="char-button" onclick="addCharacter('#')" title="Add #">#</button>
-                    <button class="char-button" onclick="addCharacter(',')" title="Add ,">,</button>
-                    <button class="char-button" onclick="addCharacter('!')" title="Add !">!</button>
-                    <button class="char-button" onclick="addCharacter('@')" title="Add @">@</button>
-                    <button class="char-button" onclick="addCharacter('&')" title="Add &">&</button>
-                </div>
-                
-                <div style="text-align: center; margin-top: 15px;">
-                    <button class="button clear-button" onclick="clearTextInput()">🗑️ Clear Text</button>
-                    <button class="button clear-button" onclick="backspaceText()">⌫ Backspace</button>
-                </div>
-            </div>
-        </div>
-
-        <div class="button-grid">
-            <button class="button" onclick="sendText()">Send to Display</button>
-            <button class="button clear-button" onclick="clearDisplay()">Clear Display</button>
-        </div>
-
-        <div class="input-group">
-            <label>Quick Messages:</label>
-            <div class="preset-buttons">
-                <button class="button preset-button" onclick="sendPreset('MATVEY')">MATVEY</button>
-                <button class="button preset-button" onclick="sendPreset('PILOT')">PILOT</button>
-                <button class="button preset-button" onclick="sendPreset('VIBING')">VIBING</button>
-                <button class="button preset-button" onclick="sendPreset('FLYING')">FLYING</button>
-                <button class="button preset-button" onclick="sendPreset('TRAVEL')">TRAVEL</button>
-                <button class="button preset-button" onclick="sendPreset('HELLO')">HELLO</button>
-                <button class="button preset-button" onclick="sendPreset('CANADA')">CANADA</button>
-                <button class="button preset-button" onclick="sendPreset('RUSSIA')">RUSSIA</button>
-            </div>
-        </div>
-
-        <div class="input-group">
-            <label>Clock Mode:</label>
-            <div class="preset-buttons">
-                <button class="button clock-button" id="clockButton" onclick="toggleClock()">🕐 Start Clock</button>
-                <select id="timezoneSelect" onchange="updateTimezone()">
-                    <option value="America/New_York">EST - Eastern Time</option>
-                    <option value="America/Chicago">CST - Central Time</option>
-                    <option value="America/Denver">MST - Mountain Time</option>
-                    <option value="America/Los_Angeles">PST - Pacific Time</option>
-                    <option value="America/Toronto">EST - Toronto</option>
+                    <option value="America/Halifax">AST - Atlantic Time (Halifax)</option>
                     <option value="America/Vancouver">PST - Vancouver</option>
                     <option value="Europe/London">GMT - London</option>
                     <option value="Europe/Paris">CET - Paris</option>
@@ -1055,15 +850,13 @@
                     <button class="button" onclick="reconnectMQTT()">Reconnect</button>
                     <button class="button" onclick="resetToDefaults()">Reset to Defaults</button>
                 </div>
+                
+                <div style="text-align: center; margin-top: 15px;">
+                    <button class="button clear-button" onclick="clearTextInput()">🗑️ Clear Text</button>
+                    <button class="button clear-button" onclick="backspaceText()">⌫ Backspace</button>
+                </div>
             </div>
         </div>
-
-        <div class="footer">
-            <p>🌐 GitHub Pages Splitflap Controller</p>
-            <p>Send messages to your splitflap display from anywhere!</p>
-        </div>
-    </div>
-
     <script>
         // Firebase Configuration
         const firebaseConfig = {
@@ -1108,7 +901,54 @@
         // Clock Configuration
         let clockMode = false;
         let clockInterval = null;
+        let lastDisplayedTime = '      '; // Track last sent display to prevent unnecessary updates
         let selectedTimezone = 'America/New_York';
+
+         // Character manipulation functions
+    function addCharacter(char) {
+        const textInput = document.getElementById('textInput');
+        const currentText = textInput.value;
+        
+        // Check if we're at the 6 character limit
+        if (currentText.length >= 6) {
+            // Visual feedback that we're at limit
+            textInput.style.borderColor = '#dc3545';
+            setTimeout(() => {
+                textInput.style.borderColor = '#e9ecef';
+            }, 500);
+            return;
+        }
+        
+        // Add the character
+        textInput.value = currentText + char;
+        updateTextDisplay();
+        
+        // Visual feedback
+        textInput.focus();
+    }
+
+    function updateTextDisplay() {
+        const textInput = document.getElementById('textInput');
+        const textDisplay = document.getElementById('textDisplay');
+        let text = textInput.value;
+        
+        // Pad with underscores to show 6 positions
+        const displayText = text.padEnd(6, '_');
+        textDisplay.textContent = displayText;
+    }
+
+    function clearText() {
+        const textInput = document.getElementById('textInput');
+        textInput.value = '';
+        updateTextDisplay();
+    }
+
+    function backspaceText() {
+        const textInput = document.getElementById('textInput');
+        const currentText = textInput.value;
+        textInput.value = currentText.slice(0, -1);
+        updateTextDisplay();
+    }
 
         // Flight Tracker Configuration
         let flightTrackingMode = false;
@@ -1139,27 +979,24 @@
         };
 
         // NEW: Text formatting function to ensure exactly 6 characters
-        function formatFor6CharDisplay(text) {
-    // Convert to uppercase and remove invalid characters
-    let formatted = text.toUpperCase().replace(/[^A-Z0-9 ]/g, '');
+        function formatFor6CharDisplay(text, preserveBlanks = false) {
+    // Convert to uppercase and handle special characters
+    let formatted = text.toUpperCase().replace(/[^A-Z0-9 .?$'#,!@&-]/g, '');
     
-    // Check if this looks like an airline callsign (all letters, 3-4 characters typically)
-    // and try to shorten it using our airline mapping
-    if (/^[A-Z]{3,4}$/.test(formatted.trim())) {
-        const shortened = window.AirlineShortener.getShortAirlineCode(formatted.trim());
-        if (shortened && shortened !== formatted.trim()) {
-            formatted = shortened;
-            console.log(`Airline code shortened: ${text.trim()} -> ${shortened}`);
+    if (preserveBlanks) {
+        // For clock mode, preserve the exact length and use spaces for blanks
+        if (formatted.length > 6) {
+            formatted = formatted.substring(0, 6);
+        } else if (formatted.length < 6) {
+            formatted = formatted.padEnd(6, ' ');
         }
-    }
-    
-    // Ensure exactly 6 characters
-    if (formatted.length > 6) {
-        // If too long, take the first 6 characters
-        formatted = formatted.substring(0, 6);
-    } else if (formatted.length < 6) {
-        // If too short, pad with spaces at the end
-        formatted = formatted.padEnd(6, ' ');
+    } else {
+        // For regular text, ensure exactly 6 characters
+        if (formatted.length > 6) {
+            formatted = formatted.substring(0, 6);
+        } else if (formatted.length < 6) {
+            formatted = formatted.padEnd(6, ' ');
+        }
     }
     
     return formatted;
@@ -1354,7 +1191,8 @@ function updateFlightDisplayWithAirlineShortening(flight) {
                 clearInterval(clockInterval);
                 clockButton.textContent = '🕐 Start Clock';
                 clockButton.className = 'button clock-button';
-                addMessage('🕐 Clock mode stopped');
+                addMessage('🕐 Smart clock mode stopped');
+lastDisplayedTime = '      '; // Reset tracking
             } else {
                 if (!isConnected) {
                     alert('Not connected to MQTT broker! Check the Advanced Settings tab.');
@@ -1364,45 +1202,75 @@ function updateFlightDisplayWithAirlineShortening(flight) {
                 clockMode = true;
                 clockButton.textContent = '⏹️ Stop Clock';
                 clockButton.className = 'button clock-button clock-active';
-                addMessage(`🕐 Clock mode started (${selectedTimezone})`);
-                
-                sendCurrentTime();
-                clockInterval = setInterval(sendCurrentTime, 60000);
+                addMessage(`🕐 Smart clock mode started (${selectedTimezone})`);
+addMessage(`💡 Smart mode prevents unnecessary flap rotations!`);
+
+// Send initial time immediately
+sendSmartClockUpdate();
+
+// Set up interval to check every 10 seconds for better responsiveness
+clockInterval = setInterval(sendSmartClockUpdate, 10000);
             }
         }
 
-        function sendCurrentTime() {
-            if (!isConnected || !clockMode) return;
+        function sendSmartClockUpdate() {
+    if (!isConnected || !clockMode) return;
+    
+    try {
+        const now = new Date();
+        const timeString = now.toLocaleTimeString('en-US', {
+            timeZone: selectedTimezone,
+            hour12: false,
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+        
+        // Format as "HH MM" (space instead of colon)
+        const displayTime = timeString.substring(0, 5).replace(':', ' ');
+        const formattedTime = formatFor6CharDisplay(displayTime, true);
+        
+        // Only send update if the time has actually changed
+        if (formattedTime !== lastDisplayedTime) {
+            mqttClient.publish(MQTT_TOPIC, formattedTime, { qos: 0 });
+            addMessage(`🕐 Smart Clock: ${timeString} (${selectedTimezone}) -> "${formattedTime}"`);
             
-            try {
-                const now = new Date();
-                const timeString = now.toLocaleTimeString('en-US', {
-                    timeZone: selectedTimezone,
-                    hour12: false,
-                    hour: '2-digit',
-                    minute: '2-digit'
-                });
-                
-                const displayTime = timeString.substring(0, 5).replace(':', ' ');
-                const formattedTime = formatFor6CharDisplay(displayTime);
-                
-                mqttClient.publish(MQTT_TOPIC, formattedTime, { qos: 0 });
-                addMessage(`🕐 Clock: ${timeString} (${selectedTimezone}) -> "${formattedTime}"`);
-                
-            } catch (error) {
-                addMessage('❌ Clock error: ' + error.message);
+            // Show which positions changed
+            let changedPositions = [];
+            for (let i = 0; i < 6; i++) {
+                if (lastDisplayedTime[i] !== formattedTime[i]) {
+                    changedPositions.push(i + 1);
+                }
+            }
+            
+            if (changedPositions.length > 0) {
+                addMessage(`📍 Updated positions: ${changedPositions.join(', ')} (prevented ${6 - changedPositions.length} unnecessary rotations)`);
+            }
+            
+            lastDisplayedTime = formattedTime;
+        } else {
+            // Log that no update was needed (but only occasionally to avoid spam)
+            const seconds = now.getSeconds();
+            if (seconds === 0) { // Only log at the top of each minute
+                addMessage(`✅ No clock update needed - time unchanged`);
             }
         }
+        
+    } catch (error) {
+        addMessage('❌ Smart clock error: ' + error.message);
+    }
+}
 
-        function updateTimezone() {
-            const timezoneSelect = document.getElementById('timezoneSelect');
-            selectedTimezone = timezoneSelect.value;
-            addMessage(`🌍 Timezone updated to: ${selectedTimezone}`);
-            
-            if (clockMode) {
-                sendCurrentTime();
-            }
-        }
+function updateTimezone() {
+    const timezoneSelect = document.getElementById('timezoneSelect');
+    selectedTimezone = timezoneSelect.value;
+    addMessage(`🌍 Timezone updated to: ${selectedTimezone}`);
+    
+    if (clockMode) {
+        // Force immediate update when timezone changes
+        lastDisplayedTime = '      ';
+        sendSmartClockUpdate();
+    }
+}
 
         // Credential management functions
         function saveCredentials() {
@@ -1733,6 +1601,7 @@ function updateFlightDisplayWithAirlineShortening(flight) {
             MQTT_BROKER = 'wss://test.mosquitto.org:8081';
             MQTT_TOPIC = 'splitflap/matvey/command';
             selectedTimezone = 'America/New_York';
+            lastDisplayedTime = '      ';
             selectedLocation = 'toronto';
             flightCheckInterval = 300000;
             
